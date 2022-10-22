@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CollisionDetector.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gremlins_scaffold</a> &gt; <a href="index.source.html" class="el_package">gremlins</a> &gt; <span class="el_source">CollisionDetector.java</span></div><h1>CollisionDetector.java</h1><pre class="source lang-java linenums">package gremlins;
+
+import java.util.Arrays;
+
+<span class="nc" id="L5">public class CollisionDetector {</span>
+    private static boolean isInYBounds(Collider colliderA, Collider colliderB) {
+
+<span class="fc bfc" id="L8" title="All 4 branches covered.">        boolean isColliderPartialAbove = (colliderA.bounds.bottom &gt; colliderB.bounds.top) &amp; (colliderA.bounds.bottom &lt; colliderB.bounds.bottom);</span>
+<span class="fc bfc" id="L9" title="All 4 branches covered.">        boolean isColliderPartialBelow = (colliderA.bounds.top &gt; colliderB.bounds.top) &amp; (colliderA.bounds.top &lt; colliderB.bounds.bottom);</span>
+<span class="fc bfc" id="L10" title="All 4 branches covered.">        boolean isColliderExactBetween = (colliderA.bounds.top == colliderB.bounds.top) &amp; (colliderA.bounds.bottom == colliderB.bounds.bottom);</span>
+        
+<span class="pc bpc" id="L12" title="1 of 6 branches missed.">        boolean isInYRange = (isColliderPartialAbove) || (isColliderPartialBelow) || (isColliderExactBetween);</span>
+<span class="fc" id="L13">        return isInYRange;</span>
+    }
+
+    private static boolean isInXBounds(Collider colliderA, Collider colliderB) {
+
+<span class="pc bpc" id="L18" title="1 of 4 branches missed.">        boolean isColliderPartialLeft = (colliderA.bounds.right &gt; colliderB.bounds.left) &amp;&amp; (colliderA.bounds.right &lt; colliderB.bounds.right);</span>
+<span class="pc bpc" id="L19" title="1 of 4 branches missed.">        boolean isColliderPartialRight = (colliderA.bounds.left &gt; colliderB.bounds.left) &amp;&amp; (colliderA.bounds.left &lt; colliderB.bounds.right);</span>
+<span class="pc bpc" id="L20" title="1 of 4 branches missed.">        boolean isColliderExactBetween = (colliderA.bounds.left == colliderB.bounds.left) &amp;&amp; (colliderA.bounds.right == colliderB.bounds.right);</span>
+
+<span class="pc bpc" id="L22" title="2 of 6 branches missed.">        boolean isInXRange = isColliderPartialLeft || isColliderPartialRight || isColliderExactBetween;</span>
+<span class="fc" id="L23">        return isInXRange;</span>
+    }
+
+    public static boolean isRightColliding(Collider colliderA, Collider colliderB) {
+<span class="fc" id="L27">        boolean isInYRange = isInYBounds(colliderA, colliderB);</span>
+<span class="fc bfc" id="L28" title="All 4 branches covered.">        boolean isRightBoundColliding = (colliderA.bounds.right + 2 &gt; colliderB.bounds.left) &amp; (colliderA.bounds.right + 2 &lt; colliderB.bounds.right);</span>
+<span class="fc bfc" id="L29" title="All 2 branches covered.">        if (isRightBoundColliding == true) {</span>
+<span class="fc bfc" id="L30" title="All 2 branches covered.">            if (isInYRange == true) {</span>
+<span class="fc" id="L31">                return true; </span>
+            }   
+        }
+
+<span class="fc" id="L35">        return false;</span>
+    }
+
+    public static boolean isLeftColliding(Collider colliderA, Collider colliderB) {
+<span class="fc" id="L39">        boolean isInYRange = isInYBounds(colliderA, colliderB);</span>
+<span class="pc bpc" id="L40" title="1 of 4 branches missed.">        boolean isLeftBoundColliding = (colliderA.bounds.left - 2 &gt; colliderB.bounds.left) &amp; (colliderA.bounds.left - 2 &lt; colliderB.bounds.right);</span>
+
+<span class="fc bfc" id="L42" title="All 2 branches covered.">        if (isLeftBoundColliding == true) {</span>
+            // System.out.printf(&quot;LeftBoundColliding %b\n&quot;, isLeftBoundColliding);
+            // System.out.println(&quot;hit&quot;);
+<span class="fc bfc" id="L45" title="All 2 branches covered.">            if (isInYRange == true) {</span>
+                // System.out.printf(&quot;LeftBoundColliding %b\n&quot;, isLeftBoundColliding);
+                // System.out.printf(&quot;InYRange: %b\n&quot;, isInYRange);
+<span class="fc" id="L48">                return true; </span>
+            }   
+        }
+
+<span class="fc" id="L52">        return false;</span>
+    }
+
+    public static boolean isTopColliding(Collider colliderA, Collider colliderB) {
+<span class="fc" id="L56">        boolean isInXRange = isInXBounds(colliderA, colliderB);</span>
+<span class="pc bpc" id="L57" title="1 of 4 branches missed.">        boolean isTopBoundColliding = (colliderA.bounds.top - 2 &gt; colliderB.bounds.top) &amp;&amp; (colliderA.bounds.top - 2 &lt; colliderB.bounds.bottom);</span>
+
+<span class="fc bfc" id="L59" title="All 2 branches covered.">        if (isInXRange == true) {</span>
+            // System.out.printf(&quot;InXRange: %b\n&quot;, isInXRange);
+<span class="fc bfc" id="L61" title="All 2 branches covered.">            if (isTopBoundColliding == true) {</span>
+                // System.out.printf(&quot;topBoundColliding %b\n&quot;, isTopBoundColliding);
+                // System.out.printf(&quot;InYRange: %b\n&quot;, isInXRange);
+<span class="fc" id="L64">                return true; </span>
+            }   
+        }
+
+<span class="fc" id="L68">        return false;</span>
+    }
+
+    public static boolean isBottomColliding(Collider colliderA, Collider colliderB) {
+<span class="fc" id="L72">        boolean isInXRange = isInXBounds(colliderA, colliderB);</span>
+<span class="fc bfc" id="L73" title="All 4 branches covered.">        boolean isBottomBoundColliding = (colliderA.bounds.bottom + 2 &gt; colliderB.bounds.top) &amp; (colliderA.bounds.bottom + 2 &lt; colliderB.bounds.bottom);</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">        if (isBottomBoundColliding == true) {</span>
+<span class="pc bpc" id="L75" title="1 of 2 branches missed.">            if (isInXRange == true) {</span>
+<span class="fc" id="L76">                return true; </span>
+            }   
+        }
+
+<span class="fc" id="L80">        return false;</span>
+    }
+
+    public static Boolean[] checkCollisions(Collider colliderA, Collider colliderB) {
+        // Boolean array for each direction
+<span class="fc" id="L85">        Boolean[] isCollidingWithWall = new Boolean[] {false, false, false, false};</span>
+
+<span class="fc" id="L87">        boolean isLeftColliding = CollisionDetector.isLeftColliding(colliderA, colliderB);</span>
+<span class="fc" id="L88">        boolean isRightColliding = CollisionDetector.isRightColliding(colliderA, colliderB);</span>
+<span class="fc" id="L89">        boolean isTopColliding = CollisionDetector.isTopColliding(colliderA, colliderB);</span>
+<span class="fc" id="L90">        boolean isBottomColliding = CollisionDetector.isBottomColliding(colliderA, colliderB);</span>
+
+<span class="pc bpc" id="L92" title="1 of 2 branches missed.">        if (isLeftColliding == true) {</span>
+<span class="nc" id="L93">            isCollidingWithWall[0] = true;</span>
+        } 
+
+<span class="fc bfc" id="L96" title="All 2 branches covered.">        if (isRightColliding == true) {</span>
+<span class="fc" id="L97">            isCollidingWithWall[1] = true;</span>
+        } 
+
+<span class="pc bpc" id="L100" title="1 of 2 branches missed.">        if (isTopColliding == true) {</span>
+<span class="nc" id="L101">            isCollidingWithWall[2] = true;</span>
+        } 
+
+<span class="fc bfc" id="L104" title="All 2 branches covered.">        if (isBottomColliding == true) {</span>
+<span class="fc" id="L105">            isCollidingWithWall[3] = true;</span>
+        }
+
+<span class="fc" id="L108">        return isCollidingWithWall; </span>
+    }
+
+    public static boolean isColliding (Collider colliderA, Collider colliderB) {
+<span class="nc" id="L112">        Boolean[] collisionData = checkCollisions(colliderA, colliderB);</span>
+
+<span class="nc bnc" id="L114" title="All 2 branches missed.">        boolean isColliding = Arrays.stream(collisionData).anyMatch(colBool -&gt; colBool == true);</span>
+        
+<span class="nc" id="L116">        return isColliding;</span>
+    }
+
+    public static double getDistanceBetween(Collider colliderA, Collider colliderB) {
+<span class="nc" id="L120">        double deltaX = colliderA.posX - colliderB.posX;</span>
+<span class="nc" id="L121">        double deltaY = colliderA.posY - colliderB.posY;</span>
+       
+<span class="nc" id="L123">        return Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

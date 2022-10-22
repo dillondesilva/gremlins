@@ -13,12 +13,23 @@ public class Player extends Collider {
 
     public Health health; 
 
+    private float originX;
+    private float originY;
+
     public Player(PApplet app, float x, float y, int lives) {
         super(app, x, y);
 
-        this.image = app.loadImage(app.getClass().getResource("wizard0.png").getPath().replace("%20", ""));
-        this.velocityX = 0;
+        this.originX = x;
+        this.originY = y;
+
+        try {
+            this.image = app.loadImage(app.getClass().getResource("wizard0.png").getPath().replace("%20", ""));
+        } catch (Exception e) {
+            // do nothing
+        }
+    
         this.velocityY = 0;
+        
         this.directionFacing = "Right";
 
         this.health = new Health(app, lives);
@@ -65,6 +76,13 @@ public class Player extends Collider {
         this.velocityY = -2;
 
         this.directionFacing = "Up";
+    }
+
+    public void resetToOrigin() {
+        this.posX = this.originX;
+        this.posY = this.originY;
+
+        this.bounds.setBounds(this.posX, this.posY);
     }
 
     public void damage() {

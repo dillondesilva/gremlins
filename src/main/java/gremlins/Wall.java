@@ -10,7 +10,12 @@ public class Wall extends Collider {
     public Wall(PApplet app, float locX, float locY, String imgSrc, String type) {
         super(app, locX, locY);
 
-        this.image = app.loadImage(app.getClass().getResource(imgSrc).getPath().replace("%20", ""));;
+        try {
+            this.image = app.loadImage(app.getClass().getResource(imgSrc).getPath().replace("%20", "")); 
+        } catch (Exception e) {
+            // Do nothing
+        }
+        // this.image = app.loadImage(app.getClass().getResource(imgSrc).getPath().replace("%20", ""));
         this.wallType = type;
     }
     

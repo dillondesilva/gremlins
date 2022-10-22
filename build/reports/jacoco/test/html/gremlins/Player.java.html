@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Player.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gremlins_scaffold</a> &gt; <a href="index.source.html" class="el_package">gremlins</a> &gt; <span class="el_source">Player.java</span></div><h1>Player.java</h1><pre class="source lang-java linenums">package gremlins;
+
+
+import processing.core.PApplet;
+import processing.core.PImage;
+
+public class Player extends Collider {
+    public PImage image;
+    public String directionFacing;
+
+    public float velocityX;
+    public float velocityY;
+
+    public Health health; 
+
+    private float originX;
+    private float originY;
+
+    public Player(PApplet app, float x, float y, int lives) {
+<span class="fc" id="L20">        super(app, x, y);</span>
+
+<span class="fc" id="L22">        this.originX = x;</span>
+<span class="fc" id="L23">        this.originY = y;</span>
+
+        try {
+<span class="nc" id="L26">            this.image = app.loadImage(app.getClass().getResource(&quot;wizard0.png&quot;).getPath().replace(&quot;%20&quot;, &quot;&quot;));</span>
+<span class="fc" id="L27">        } catch (Exception e) {</span>
+            // do nothing
+<span class="nc" id="L29">        }</span>
+    
+<span class="fc" id="L31">        this.velocityY = 0;</span>
+        
+<span class="fc" id="L33">        this.directionFacing = &quot;Right&quot;;</span>
+
+<span class="fc" id="L35">        this.health = new Health(app, lives);</span>
+<span class="fc" id="L36">    }</span>
+
+    public void moveTo(PApplet app, float locX, float locY) {
+<span class="nc" id="L39">        app.image(this.image, locX, locY);</span>
+<span class="nc" id="L40">    }</span>
+
+    public void draw(PApplet app) {
+<span class="nc" id="L43">        app.image(this.image, this.posX, this.posY);</span>
+<span class="nc" id="L44">    }</span>
+
+    public void moveLeft(PApplet app) {
+<span class="nc" id="L47">        this.image = app.loadImage(app.getClass().getResource(&quot;wizard0.png&quot;).getPath().replace(&quot;%20&quot;, &quot;&quot;));</span>
+   
+<span class="nc" id="L49">        this.velocityX = -2;</span>
+<span class="nc" id="L50">        this.velocityY = 0;</span>
+
+<span class="nc" id="L52">        this.directionFacing = &quot;Left&quot;;</span>
+<span class="nc" id="L53">    }</span>
+
+    public void moveRight(PApplet app) {
+<span class="nc" id="L56">        this.image = app.loadImage(app.getClass().getResource(&quot;wizard1.png&quot;).getPath().replace(&quot;%20&quot;, &quot;&quot;));</span>
+
+<span class="nc" id="L58">        this.velocityX = 2;</span>
+<span class="nc" id="L59">        this.velocityY = 0;</span>
+     
+<span class="nc" id="L61">        this.directionFacing = &quot;Right&quot;;</span>
+<span class="nc" id="L62">    }</span>
+
+    public void moveDown(PApplet app) {
+<span class="nc" id="L65">        this.image = app.loadImage(app.getClass().getResource(&quot;wizard2.png&quot;).getPath().replace(&quot;%20&quot;, &quot;&quot;));</span>
+  
+<span class="nc" id="L67">        this.velocityX = 0;</span>
+<span class="nc" id="L68">        this.velocityY = 2;</span>
+
+<span class="nc" id="L70">        this.directionFacing = &quot;Down&quot;;</span>
+<span class="nc" id="L71">    }</span>
+
+    public void moveUp(PApplet app) {
+<span class="nc" id="L74">        this.image = app.loadImage(app.getClass().getResource(&quot;wizard3.png&quot;).getPath().replace(&quot;%20&quot;, &quot;&quot;));</span>
+<span class="nc" id="L75">        this.velocityX = 0;</span>
+<span class="nc" id="L76">        this.velocityY = -2;</span>
+
+<span class="nc" id="L78">        this.directionFacing = &quot;Up&quot;;</span>
+<span class="nc" id="L79">    }</span>
+
+    public void resetToOrigin() {
+<span class="fc" id="L82">        this.posX = this.originX;</span>
+<span class="fc" id="L83">        this.posY = this.originY;</span>
+
+<span class="fc" id="L85">        this.bounds.setBounds(this.posX, this.posY);</span>
+<span class="fc" id="L86">    }</span>
+
+    public void damage() {
+<span class="fc" id="L89">        this.health.numLives -= 1;</span>
+<span class="fc" id="L90">        System.out.println(&quot;hit&quot;);</span>
+<span class="fc" id="L91">    }</span>
+
+    public void move() {
+<span class="nc" id="L94">        this.posX += this.velocityX;</span>
+<span class="nc" id="L95">        this.posY += this.velocityY;</span>
+
+<span class="nc" id="L97">        this.bounds.shiftBounds(this.velocityX, this.velocityY);</span>
+<span class="nc" id="L98">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

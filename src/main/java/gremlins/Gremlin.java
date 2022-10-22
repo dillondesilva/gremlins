@@ -24,10 +24,17 @@ public class Gremlin extends Collider {
 
     public boolean isAlive;
     public Instant lastDeathTime;
+    public Instant lastFiringTime;
 
     public Gremlin(PApplet app) {
         super(app, 0, 0);
-        this.image = app.loadImage(app.getClass().getResource("gremlin.png").getPath().replace("%20", ""));
+
+        try {
+            this.image = app.loadImage(app.getClass().getResource("gremlin.png").getPath().replace("%20", ""));
+        } catch (Exception e) {
+            // do nothing this is for testing
+        }
+
         this.posX = 0;
         this.posY = 0;
 
@@ -37,23 +44,24 @@ public class Gremlin extends Collider {
 
         this.isAlive = true;
         this.lastDeathTime = Instant.now();
+        this.lastFiringTime = Instant.now();
     }
 
     public void changeHeading(int newHeading) {
         this.headingDirection = newHeading;
 
         if (newHeading == 0) {
-            this.velocityX = -2;
+            this.velocityX = -1;
             this.velocityY = 0;
         } else if (newHeading == 1) {
-            this.velocityX = 2;
+            this.velocityX = 1;
             this.velocityY = 0;
         } else if (newHeading == 2) {
             this.velocityX = 0;
-            this.velocityY = -2;
+            this.velocityY = -1;
         } else if (newHeading == 3) {
             this.velocityX = 0;
-            this.velocityY = 2;
+            this.velocityY = 1;
         }  
     }
 
@@ -77,6 +85,18 @@ public class Gremlin extends Collider {
         lastDeathTime = Instant.now();
     }
 
+    public boolean isShootAvailable() {
+        Instant currentTime = Instant.now();
+        Duration timeSinceLastFiring = Duration.between(this.lastFiringTime, currentTime);
+
+        if ((timeSinceLastFiring.toMillis() > 3000) && (this.isAlive == true)) {
+            this.lastFiringTime = Instant.now();
+            return true;
+        }
+
+        return false;
+    }
+
     public boolean requiresRespawn() {
         if (isAlive == false) {
             Instant currentTime = Instant.now();
@@ -89,7 +109,7 @@ public class Gremlin extends Collider {
         return false;
     }
 
-    public void respawn(Player player, ArrayList<Ground> groundTiles) {
+    public void respawn(Collider player, ArrayList<Ground> groundTiles) {
         for (Ground groundTile: groundTiles) {
             double distanceToPlayer = CollisionDetector.getDistanceBetween(player, groundTile);
             

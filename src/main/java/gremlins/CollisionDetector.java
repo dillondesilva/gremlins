@@ -1,5 +1,7 @@
 package gremlins;
 
+import java.util.Arrays;
+
 public class CollisionDetector {
     private static boolean isInYBounds(Collider colliderA, Collider colliderB) {
 
@@ -78,9 +80,9 @@ public class CollisionDetector {
         return false;
     }
 
-    public static boolean[] checkCollisions(Collider colliderA, Collider colliderB) {
+    public static Boolean[] checkCollisions(Collider colliderA, Collider colliderB) {
         // Boolean array for each direction
-        boolean[] isCollidingWithWall = new boolean[] {false, false, false, false};
+        Boolean[] isCollidingWithWall = new Boolean[] {false, false, false, false};
 
         boolean isLeftColliding = CollisionDetector.isLeftColliding(colliderA, colliderB);
         boolean isRightColliding = CollisionDetector.isRightColliding(colliderA, colliderB);
@@ -104,6 +106,14 @@ public class CollisionDetector {
         }
 
         return isCollidingWithWall; 
+    }
+
+    public static boolean isColliding (Collider colliderA, Collider colliderB) {
+        Boolean[] collisionData = checkCollisions(colliderA, colliderB);
+
+        boolean isColliding = Arrays.stream(collisionData).anyMatch(colBool -> colBool == true);
+        
+        return isColliding;
     }
 
     public static double getDistanceBetween(Collider colliderA, Collider colliderB) {

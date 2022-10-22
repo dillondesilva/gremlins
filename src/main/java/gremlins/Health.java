@@ -20,7 +20,12 @@ public class Health {
         this.context = app;
         this.posX = 100;
         this.posY = 680;
-        this.image = app.loadImage(app.getClass().getResource("wizard0.png").getPath().replace("%20", ""));
+        
+        try {
+            this.image = app.loadImage(app.getClass().getResource("wizard0.png").getPath().replace("%20", ""));
+        } catch (Exception e) {
+
+        }
     }
 
     public void bar() {

@@ -26,16 +26,24 @@ public class App extends PApplet {
 
     public static final int FPS = 60;
 
+    public int numLevels;
+
     public static final Random randomGenerator = new Random();
 
     public String configPath;
+
+    public int currentLevel;
     
     public BrickWall brickwall;
     public StoneWall stonewall;
 
+    public Life lifePowerup;
+    public IceWall icewall;
+
     public Player player;
 
-    public boolean isStart = true;
+    public boolean isWon = true;
+    public int gameActiveState;
 
     public char[][] map = new char[37][37];
 
@@ -46,6 +54,9 @@ public class App extends PApplet {
     public ArrayList<StoneWall> activeStoneWalls = new ArrayList<StoneWall>();
     public ArrayList<BrickWall> activeBrickWalls = new ArrayList<BrickWall>();
     public ArrayList<Ground> groundTiles = new ArrayList<Ground>();
+    public ArrayList<Slime> activeSlimes = new ArrayList<Slime>();
+
+    public EscapeDoor escapeDoor;
 
     public App() {
         this.configPath = "config.json";
@@ -62,16 +73,44 @@ public class App extends PApplet {
      * Load all resources such as images. Initialise the elements such as the player, enemies and map elements.
     */
     public void setup() {
-        drawMap();
         frameRate(FPS);
-
-        // Load images during setup
-        // this.stonewall = new StoneWall(this);
-        // this.brickwall = new BrickWall(this);
+        this.gameActiveState = 0; 
 
         try {
-            File levelOneData = new File("level1.txt");
-            Scanner levelScanner = new Scanner(levelOneData).useDelimiter("\n");
+            JSONObject conf = loadJSONObject(new File(this.configPath));
+            JSONArray newObj = conf.getJSONArray("levels");
+            
+            this.numLevels = newObj.size();
+        } catch (Exception e) {
+            System.out.println("Error loading game. Please check configuration");
+        }
+
+        this.currentLevel = 1;
+        initializeLevel(this.currentLevel, 3);
+
+        drawMap();
+    }
+
+    public void initializeLevel(int levelNum, int numLives) {
+        String levelFileName = String.format("level%d.txt", levelNum);
+        
+        activeFireballs = new ArrayList<Fireball>();
+        activeGremlins = new ArrayList<Gremlin>();
+        activeWalls = new ArrayList<Wall>();
+
+        activeStoneWalls = new ArrayList<StoneWall>();
+        activeBrickWalls = new ArrayList<BrickWall>();
+        groundTiles = new ArrayList<Ground>();
+        activeSlimes = new ArrayList<Slime>();
+
+        lifePowerup = new Life(this, 0, 0);
+        icewall = new IceWall(this, 0, 0);
+        
+        try {
+            File levelData = new File(levelFileName);
+            Scanner levelScanner = new Scanner(levelData).useDelimiter("\n");
+
+            map = new char[37][37];
 
             int rowCount = 0;
             int colCount = 0;
@@ -79,7 +118,7 @@ public class App extends PApplet {
             while (levelScanner.hasNext()) {
                 String tileRow = levelScanner.next();
                 int tileRowCount = 0;
-
+                System.out.println(tileRow);
                 while (tileRowCount < tileRow.length()) {
                     char tile = tileRow.charAt(tileRowCount);
                     // System.out.printf("Row Count: %d, Col Count: %d, Character: %c\n", rowCount, colCount, tile);
@@ -92,7 +131,7 @@ public class App extends PApplet {
                         float x = colCount * 20;
                         float y = rowCount * 20;
 
-                        this.player = new Player(this, colCount * 20, rowCount * 20, 3);
+                        this.player = new Player(this, colCount * 20, rowCount * 20, numLives);
                         // this.player.moveTo(this, colCount * 20, rowCount * 20);
                     } else if (tile == 'G') {
                         Gremlin gremlin = new Gremlin(this);
@@ -122,165 +161,20 @@ public class App extends PApplet {
 
             levelScanner.close();
         } catch (FileNotFoundException e) {
-            System.out.println("level2.txt doesn't exist");
+            System.out.printf("%s doesn't exist\n", levelFileName);
         }
-
-        
-        //this.gremlin = loadImage(this.getClass().getResource("gremlin.png").getPath().replace("%20", ""));
-        //this.slime = loadImage(this.getClass().getResource("slime.png").getPath().replace("%20", ""));
-        //this.fireball = loadImage(this.getClass().getResource("fireball.png").getPath().replace("%20", ""));
-        
-        JSONObject conf = loadJSONObject(new File(this.configPath));
-        drawMap();
     }
 
-    public boolean detectRightCollision(Collider collider) {
-        int rowCount = 0;
-
-
-        while(rowCount < map.length) {
-            int colCount = 0;
-            while (colCount < map[1].length) {
-               
-                char brick = 'B';
-                char stone = 'X';
-
-                int leftX = colCount * 20;
-                int rightX = (colCount * 20) + 20;
-                int topY = rowCount * 20;
-                int bottomY = (rowCount * 20) + 20;
-
-                float colliderRightX = collider.posX + 20;
-                float colliderTopY = collider.posY;
-                float colliderBottomY = collider.posY + 20;
-
-
-                if ((map[rowCount][colCount] == brick) || (map[rowCount][colCount] == stone) ) {
-                    if (((colliderRightX + 2 > leftX) && (colliderRightX + 2 < rightX))) {
-                        if (((collider.posY > topY) && (collider.posY < bottomY)) || ((colliderBottomY > topY) && (colliderBottomY < bottomY)) || ((colliderTopY == topY) && (colliderBottomY == bottomY))) {
-                            return true; 
-                        }   
-                    }
-                }
-
-                colCount++;
-            }
-
-            rowCount++;
-        } 
-
-        return false;
+    public void loadNextLevel() {
+        if (this.currentLevel == this.numLevels) {
+            this.gameActiveState = 1;
+        } else {
+            this.currentLevel += 1;
+            System.out.println(this.currentLevel);
+            initializeLevel(this.currentLevel, this.player.health.numLives);
+            drawMap();     
+        }
     }
-
-    public boolean detectLeftCollision(Collider collider) {
-        int rowCount = 0;
-
-
-        while(rowCount < map.length) {
-            int colCount = 0;
-            while (colCount < map[1].length) {
-               
-                char brick = 'B';
-                char stone = 'X';
-
-                int leftX = colCount * 20;
-                int rightX = (colCount * 20) + 20;
-                int topY = rowCount * 20;
-                int bottomY = (rowCount * 20) + 20;
-     
-                float colliderLeftX = collider.posX;
-                float colliderTopY = collider.posY;
-                float colliderBottomY = collider.posY + 20;
-
-                if ((map[rowCount][colCount] == brick) || (map[rowCount][colCount] == stone) ) {
-                    if (((colliderLeftX - 2 > leftX) && (colliderLeftX - 2 < rightX))) {
-                        if (((colliderTopY > topY) && (colliderTopY < bottomY)) || ((colliderBottomY > topY) && (colliderBottomY < bottomY)) || ((colliderTopY == topY) && (colliderBottomY == bottomY))) {
-                            return true; 
-                        }   
-                    }
-                }
-
-                colCount++;
-            }
-
-            rowCount++;
-        } 
-
-        return false;
-    }
-
-    public boolean detectUpCollision(Collider collider) {
-        int rowCount = 0;
-
-
-        while(rowCount < map.length) {
-            int colCount = 0;
-            while (colCount < map[1].length) {
-               
-                char brick = 'B';
-                char stone = 'X';
-
-                int leftX = colCount * 20;
-                int rightX = (colCount * 20) + 20;
-                int topY = rowCount * 20;
-                int bottomY = (rowCount * 20) + 20;
-
-                float colliderRightX = collider.posX + 20;
-  
-
-                if ((map[rowCount][colCount] == brick) || (map[rowCount][colCount] == stone) ) {
-                    if (((collider.posX > leftX) && (collider.posX < rightX)) || ((colliderRightX > leftX) && (colliderRightX < rightX)) || ((collider.posX == leftX) && (colliderRightX == rightX))) {
-                        if ((collider.posY - 2 > topY) && (collider.posY - 2 < bottomY)) {
-                            return true; 
-                        }   
-                    }
-                }
-
-                colCount++;
-            }
-
-            rowCount++;
-        } 
-
-        return false;
-    }
-
-    public boolean detectDownCollision(Collider collider) {
-        int rowCount = 0;
-
-
-        while(rowCount < map.length) {
-            int colCount = 0;
-            while (colCount < map[1].length) {
-               
-                char brick = 'B';
-                char stone = 'X';
-
-                int leftX = colCount * 20;
-                int rightX = (colCount * 20) + 20;
-                int topY = rowCount * 20;
-                int bottomY = (rowCount * 20) + 20;
-
-                float colliderRightX = collider.posX + 20;
-                float colliderBottomY = collider.posY + 20;
-
-                if ((map[rowCount][colCount] == brick) || (map[rowCount][colCount] == stone) ) {
-                    if (((collider.posX > leftX) && (collider.posX < rightX)) || ((colliderRightX > leftX) && (colliderRightX < rightX)) || ((collider.posX == leftX) && (colliderRightX == rightX))) {
-                        if ((colliderBottomY + 2 > topY) && (colliderBottomY + 2 < bottomY)) {
-                            return true; 
-                        }   
-                    }
-                }
-
-                colCount++;
-            }
-
-            rowCount++;
-        } 
-
-        return false; 
-    }
-
     /**
      * Receive key pressed signal from the keyboard.
     */
@@ -355,6 +249,10 @@ public class App extends PApplet {
                     groundTiles.add(groundtile);
                 }
 
+                if (map[rowCount][colCount] == 'E') {
+                    escapeDoor = new EscapeDoor(this, colCount * 20, rowCount * 20);
+                }
+
                 colCount++;
             }
 
@@ -362,112 +260,168 @@ public class App extends PApplet {
         }
     }
 
-    public void tick() {
-        // background(169, 149, 123);
-        // drawMap();
-    
-        // Iterator<Fireball> fireballItr = activeFireballs.iterator();
-
-        // while (fireballItr.hasNext()) {
-        //     Fireball fireball = fireballItr.next();
-
-        //     boolean isLeftColliding = detectLeftCollision(fireball);
-        //     boolean isRightColliding = detectRightCollision(fireball);
-        //     boolean isUpColliding = detectUpCollision(fireball);
-        //     boolean isDownColliding = detectDownCollision(fireball);
-        //     System.out.println(isLeftColliding);
-        //     if ((isLeftColliding == false) && (isRightColliding == false)) {
-        //         fireball.move(this);    
-        //     } else {
-        //         fireballItr.remove();
-        //     }   
-        // }
-
-        // for (Gremlin gremlin: activeGremlins) {
-        //     gremlin.draw(this);
-        // }
-
-        // for (Wall wall: activeWalls) {
-        //     wall.draw(this);
-        // }  
-    }
     /**
      * Draw all elements in the game by current frame. 
 	 */
     public void draw() {
         background(169, 149, 123);
 
-        boolean[] playerWallCollisions = Engine.checkWallCollisions(player, activeStoneWalls, activeBrickWalls);
-          
-        Object[] playerGremlinCollisionInfo = Engine.checkPlayerGremlinCollision(player, activeGremlins);
-        boolean isPlayerHit = (boolean)playerGremlinCollisionInfo[1];
+        if (this.gameActiveState == 0) {
 
-        activeGremlins = (ArrayList<Gremlin>)playerGremlinCollisionInfo[0];
-
-        if ((this.player.directionFacing == "Left") && (playerWallCollisions[0] == false)) {
-            this.player.move();
-        } else if ((this.player.directionFacing == "Right") && (playerWallCollisions[1] == false)) {
-            this.player.move();
-        } else if ((this.player.directionFacing == "Up") && (playerWallCollisions[2] == false)) {
-            this.player.move();
-        } else if ((this.player.directionFacing == "Down") && (playerWallCollisions[3] == false)) {
-            this.player.move();
-        }
-
-        this.player.draw(this);
-
-        Iterator<Fireball> fireballItr = activeFireballs.iterator();
-
-        while (fireballItr.hasNext()) {
-            Fireball fireball = fireballItr.next();
-
-            activeBrickWalls = Engine.renderBrickWalls(fireball, activeBrickWalls);
-            Object[] fireballGremlinCollisionData = Engine.checkFireballGremlinCollision(fireball, activeGremlins);
-            activeGremlins = (ArrayList<Gremlin>)fireballGremlinCollisionData[0];
-            boolean isFireballDestroyed = (Engine.handleFireball(fireball, activeStoneWalls, activeBrickWalls));
-            
-            if (isFireballDestroyed == false) {
-                fireball.move(this);    
-            } else {
-                fireballItr.remove();      
-            }   
-        }
-
-        for (Gremlin gremlin: activeGremlins) {
-            boolean[] collidingWalls = Engine.checkWallCollisions(gremlin, activeStoneWalls, activeBrickWalls);
-            int currentGremlinHeading = gremlin.headingDirection;
-            if (gremlin.isAlive == true) {
-                if ((collidingWalls[currentGremlinHeading] == true)) {
-                    int newGremlinHeading = (int)Math.floor(Math.random() * (3 + 1));
-                    while (collidingWalls[newGremlinHeading] == true) {
-                        newGremlinHeading = (int)Math.floor(Math.random() * (3 + 1)); 
-                    }
-    
-                    gremlin.changeHeading(newGremlinHeading);
-                    gremlin.move();
-                    gremlin.draw(this);
-                } else {
-                    gremlin.move();
-                    gremlin.draw(this);
-                }  
+            if (this.player.health.numLives == 0) {
+                this.gameActiveState = 2;
             }
-        }
+
+            Engine.handleLifePowerUpSpawn(player, lifePowerup, groundTiles);
+            Engine.checkPlayerGainsLife(player, lifePowerup);
+
+            Engine.handleIceWallSpawn(player, icewall, groundTiles);
+            // Engine.checkPlayerShotWall(player, lifePowerup);
+            
+            if (icewall.isActive == true) {
+                icewall.draw();
+            }
+
+            if (lifePowerup.isActive == true) {
+                lifePowerup.draw();
+            }
+
+            boolean isAtExit = Engine.checkPlayerAtExit(player, escapeDoor);
+            activeSlimes = Engine.monitorGremlinSpawns(player, activeGremlins, groundTiles, activeSlimes);
+            if (isAtExit == true) {
+                loadNextLevel();
+            }
+
+            Iterator<BrickWall> brickwallItr = this.activeBrickWalls.iterator();
+
+            while (brickwallItr.hasNext()) {
+                BrickWall brickwall = brickwallItr.next();
+
+                boolean isDestroyed = brickwall.tick();
+                    
+                if (isDestroyed == true) {
+
+                    brickwallItr.remove();
+                }
+  
+            }
+
+            escapeDoor.draw();
+            boolean[] playerWallCollisions = Engine.checkWallCollisions(player, activeStoneWalls, activeBrickWalls);
+              
+            Object[] playerGremlinCollisionInfo = Engine.checkPlayerGremlinCollision(player, activeGremlins);
+            boolean isPlayerHit = (boolean)playerGremlinCollisionInfo[1];
+    
+            activeGremlins = (ArrayList<Gremlin>)playerGremlinCollisionInfo[0];
+    
+            if ((this.player.directionFacing == "Left") && (playerWallCollisions[0] == false)) {
+                this.player.move();
+            } else if ((this.player.directionFacing == "Right") && (playerWallCollisions[1] == false)) {
+                this.player.move();
+            } else if ((this.player.directionFacing == "Up") && (playerWallCollisions[2] == false)) {
+                this.player.move();
+            } else if ((this.player.directionFacing == "Down") && (playerWallCollisions[3] == false)) {
+                this.player.move();
+            }
+    
+            this.player.draw(this);
+    
+            Iterator<Fireball> fireballItr = activeFireballs.iterator();
+            
+            while (fireballItr.hasNext()) {
+                Fireball fireball = fireballItr.next();
+    
+                activeBrickWalls = Engine.renderBrickWalls(fireball, activeBrickWalls);
+                Object[] fireballGremlinCollisionData = Engine.checkFireballGremlinCollision(fireball, activeGremlins);
+                activeGremlins = (ArrayList<Gremlin>)fireballGremlinCollisionData[0];
+                boolean isFireballDestroyed = (Engine.handleFireball(fireball, activeStoneWalls, activeBrickWalls));
+                
+                if (isFireballDestroyed == false) {
+                    fireball.move(this);    
+                } else {
+                    fireballItr.remove();      
+                }   
+            }
+    
+            for (Gremlin gremlin: activeGremlins) {
+                boolean[] collidingWalls = Engine.checkWallCollisions(gremlin, activeStoneWalls, activeBrickWalls);
+                int currentGremlinHeading = gremlin.headingDirection;
+                ArrayList<Integer> possibleHeadings = new ArrayList<Integer>();
+
+                int heading = 0;
+                while (heading < collidingWalls.length) {
+                    if (collidingWalls[heading] == true) {
+                        possibleHeadings.add(heading);
+                    }
+
+                    heading += 1;
+                }
+                
+                if (gremlin.isAlive == true) {
+                    if ((collidingWalls[currentGremlinHeading] == true)) {
+                        int newGremlinHeading = (int)Math.floor(Math.random() * (3 + 1));
+
+                        if (possibleHeadings.size() > 1) {
+                            int oppositeHeading = Engine.getOppositeHeading(currentGremlinHeading);
+
+                            newGremlinHeading = (int)Math.floor(Math.random() * (3 + 1));
+
+                            while ((collidingWalls[newGremlinHeading] == true) && (newGremlinHeading == oppositeHeading)) {
+                                newGremlinHeading = (int)Math.floor(Math.random() * (3 + 1)); 
+                            } 
+                        }
         
-        Engine.monitorGremlinSpawns(player, activeGremlins, groundTiles);
-        this.player.health.bar();
-        // for (Gremlin gremlin: activeGremlins) {
-        //     gremlin.draw(this);
-        // }
-        for (Wall wall: activeStoneWalls) {
-            wall.draw(this);
-        }
+                        gremlin.changeHeading(newGremlinHeading);
+                        gremlin.move();
+                        gremlin.draw(this);
+                    } else {
+                        gremlin.move();
+                        gremlin.draw(this);
+                    }  
+                }
+            }
+    
+            Iterator<Slime> slimeItr = activeSlimes.iterator();
+    
+            
+            while (slimeItr.hasNext()) {
+                Slime slime = slimeItr.next();
+    
+                boolean isSlimeDestroyed = (Engine.handleSlime(slime, activeStoneWalls, activeBrickWalls));
+                Object[] playerSlimeCollisionData = Engine.checkSlimePlayerCollision(this.player, activeSlimes);
+                activeSlimes = (ArrayList<Slime>)playerSlimeCollisionData[0];
+                
+                if (isSlimeDestroyed == false) {
+                    slime.move();  
+                    slime.draw(this);  
+                } else {
+                    slimeItr.remove();      
+                }   
+            }
 
-        for (Wall wall: activeBrickWalls) {
-            wall.draw(this);
-        }
+            for (StoneWall stonewall: activeStoneWalls) {
+                stonewall.draw(this);
+            }
 
-        textSize(20);
-        text("Lives: ", 20, 695); 
+            
+            for (BrickWall brickwall: activeBrickWalls) {
+                brickwall.draw(this);
+            }
+
+            this.player.health.bar();
+            textSize(20);
+            text("Lives: ", 20, 695); 
+    
+            String levelDisplay = String.format("Level: %d/%d", this.currentLevel, this.numLevels);
+            text(levelDisplay, 300, 695); 
+
+        } else if (this.gameActiveState == 1) {
+            textSize(30);
+            text("You Won!!!", 280, 360);     
+        } else {
+            textSize(30);
+            text("Game Over!!!", 280, 360);    
+        }
     }
 
     public static void main(String[] args) {

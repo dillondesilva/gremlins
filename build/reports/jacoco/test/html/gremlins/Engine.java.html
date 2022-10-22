@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Engine.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gremlins_scaffold</a> &gt; <a href="index.source.html" class="el_package">gremlins</a> &gt; <span class="el_source">Engine.java</span></div><h1>Engine.java</h1><pre class="source lang-java linenums">package gremlins;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+
+/**
+ * Engine is a class containing all the functionality to 
+ * combine various colliders to have the required interactions
+ * for the game
+ */
+<span class="nc" id="L11">public class Engine {</span>
+    public static boolean[] checkWallCollisions(Collider collider, ArrayList&lt;StoneWall&gt; stonewalls, ArrayList&lt;BrickWall&gt; brickwalls) {
+        // Boolean array for each direction
+<span class="fc" id="L14">        boolean[] isCollidingWithWall = new boolean[] {false, false, false, false};</span>
+
+<span class="fc bfc" id="L16" title="All 2 branches covered.">        for (Wall stonewall: stonewalls) {</span>
+<span class="fc" id="L17">            boolean isLeftColliding = CollisionDetector.isLeftColliding(collider, stonewall);</span>
+<span class="fc" id="L18">            boolean isRightColliding = CollisionDetector.isRightColliding(collider, stonewall);</span>
+<span class="fc" id="L19">            boolean isTopColliding = CollisionDetector.isTopColliding(collider, stonewall);</span>
+<span class="fc" id="L20">            boolean isBottomColliding = CollisionDetector.isBottomColliding(collider, stonewall);</span>
+
+<span class="fc bfc" id="L22" title="All 2 branches covered.">            if (isLeftColliding == true) {</span>
+<span class="fc" id="L23">                isCollidingWithWall[0] = true;</span>
+            } 
+
+<span class="pc bpc" id="L26" title="1 of 2 branches missed.">            if (isRightColliding == true) {</span>
+<span class="nc" id="L27">                isCollidingWithWall[1] = true;</span>
+            } 
+
+<span class="pc bpc" id="L30" title="1 of 2 branches missed.">            if (isTopColliding == true) {</span>
+<span class="nc" id="L31">                isCollidingWithWall[2] = true;</span>
+            } 
+
+<span class="pc bpc" id="L34" title="1 of 2 branches missed.">            if (isBottomColliding == true) {</span>
+<span class="nc" id="L35">                isCollidingWithWall[3] = true;</span>
+            }
+<span class="fc" id="L37">        }</span>
+
+<span class="pc bpc" id="L39" title="1 of 2 branches missed.">        for (Wall brickwall: brickwalls) {</span>
+<span class="nc" id="L40">            boolean isLeftColliding = CollisionDetector.isLeftColliding(collider, brickwall);</span>
+<span class="nc" id="L41">            boolean isRightColliding = CollisionDetector.isRightColliding(collider, brickwall);</span>
+<span class="nc" id="L42">            boolean isTopColliding = CollisionDetector.isTopColliding(collider, brickwall);</span>
+<span class="nc" id="L43">            boolean isBottomColliding = CollisionDetector.isBottomColliding(collider, brickwall);</span>
+
+<span class="nc bnc" id="L45" title="All 2 branches missed.">            if (isLeftColliding == true) {</span>
+<span class="nc" id="L46">                isCollidingWithWall[0] = true;</span>
+            } 
+
+<span class="nc bnc" id="L49" title="All 2 branches missed.">            if (isRightColliding == true) {</span>
+<span class="nc" id="L50">                isCollidingWithWall[1] = true;</span>
+            } 
+
+<span class="nc bnc" id="L53" title="All 2 branches missed.">            if (isTopColliding == true) {</span>
+<span class="nc" id="L54">                isCollidingWithWall[2] = true;</span>
+            } 
+
+<span class="nc bnc" id="L57" title="All 2 branches missed.">            if (isBottomColliding == true) {</span>
+<span class="nc" id="L58">                isCollidingWithWall[3] = true;</span>
+            }
+<span class="nc" id="L60">        }</span>
+        
+
+<span class="fc" id="L63">        return isCollidingWithWall;</span>
+    }
+
+    public static boolean handleFireball(Fireball fireball, ArrayList&lt;StoneWall&gt; stonewalls, ArrayList&lt;BrickWall&gt; brickwalls) {
+<span class="fc" id="L67">        Iterator&lt;BrickWall&gt; brickWallItr =  brickwalls.iterator();</span>
+<span class="fc" id="L68">        boolean isFireballDestroyed = false;</span>
+
+<span class="fc bfc" id="L70" title="All 2 branches covered.">        while (brickWallItr.hasNext()) {</span>
+<span class="fc" id="L71">            Wall wall = brickWallItr.next();</span>
+
+<span class="fc" id="L73">            Boolean[] isCollidingWithWall = CollisionDetector.checkCollisions(fireball, wall);</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">            if (isCollidingWithWall[fireball.headingDirection] == true) {</span>
+<span class="fc" id="L75">                return true;</span>
+            }     
+<span class="fc" id="L77">        }</span>
+
+<span class="fc" id="L79">        Iterator&lt;StoneWall&gt; stonewallItr = stonewalls.iterator();</span>
+
+<span class="fc bfc" id="L81" title="All 2 branches covered.">        while (stonewallItr.hasNext()) {</span>
+<span class="fc" id="L82">            StoneWall stonewall = stonewallItr.next();</span>
+
+<span class="fc" id="L84">            Boolean[] isCollidingWithWall = CollisionDetector.checkCollisions(fireball, stonewall);</span>
+<span class="pc bpc" id="L85" title="1 of 2 branches missed.">            if (isCollidingWithWall[fireball.headingDirection] == true) {</span>
+<span class="nc" id="L86">                return true;</span>
+            }     
+<span class="fc" id="L88">        }</span>
+
+<span class="fc" id="L90">        return isFireballDestroyed;</span>
+    }
+
+    public static boolean handleSlime(Slime slime, ArrayList&lt;StoneWall&gt; stonewalls, ArrayList&lt;BrickWall&gt; brickwalls) {
+<span class="nc" id="L94">        Iterator&lt;BrickWall&gt; brickWallItr =  brickwalls.iterator();</span>
+<span class="nc" id="L95">        boolean isFireballDestroyed = false;</span>
+
+<span class="nc bnc" id="L97" title="All 2 branches missed.">        while (brickWallItr.hasNext()) {</span>
+<span class="nc" id="L98">            Wall wall = brickWallItr.next();</span>
+
+<span class="nc" id="L100">            Boolean[] isCollidingWithWall = CollisionDetector.checkCollisions(slime, wall);</span>
+<span class="nc bnc" id="L101" title="All 2 branches missed.">            if (isCollidingWithWall[slime.headingDirection] == true) {</span>
+<span class="nc" id="L102">                return true;</span>
+            }     
+<span class="nc" id="L104">        }</span>
+
+<span class="nc" id="L106">        Iterator&lt;StoneWall&gt; stonewallItr = stonewalls.iterator();</span>
+
+<span class="nc bnc" id="L108" title="All 2 branches missed.">        while (stonewallItr.hasNext()) {</span>
+<span class="nc" id="L109">            StoneWall stonewall = stonewallItr.next();</span>
+
+<span class="nc" id="L111">            Boolean[] isCollidingWithWall = CollisionDetector.checkCollisions(slime, stonewall);</span>
+<span class="nc bnc" id="L112" title="All 2 branches missed.">            if (isCollidingWithWall[slime.headingDirection] == true) {</span>
+<span class="nc" id="L113">                return true;</span>
+            }     
+<span class="nc" id="L115">        }</span>
+
+<span class="nc" id="L117">        return isFireballDestroyed;</span>
+    }
+
+    public static ArrayList&lt;BrickWall&gt; renderBrickWalls(Fireball fireball, ArrayList&lt;BrickWall&gt; brickwalls) {
+<span class="nc" id="L121">        Iterator&lt;BrickWall&gt; brickwallItr = brickwalls.iterator();</span>
+
+<span class="nc bnc" id="L123" title="All 2 branches missed.">        while (brickwallItr.hasNext()) {</span>
+<span class="nc" id="L124">            BrickWall brickwall = brickwallItr.next();</span>
+
+                
+<span class="nc" id="L127">            Boolean[] isCollidingWithWall = CollisionDetector.checkCollisions(fireball, brickwall);</span>
+<span class="nc bnc" id="L128" title="All 2 branches missed.">            if (isCollidingWithWall[fireball.headingDirection] == true) {</span>
+<span class="nc" id="L129">                brickwall.brickDestroyInProgress = true;</span>
+
+<span class="nc" id="L131">                return brickwalls; </span>
+            }     
+<span class="nc" id="L133">        }</span>
+
+<span class="nc" id="L135">        return brickwalls; </span>
+    }
+
+    public static Object[] checkPlayerGremlinCollision(Player player, ArrayList&lt;Gremlin&gt; gremlins) {
+<span class="fc" id="L139">        Iterator&lt;Gremlin&gt; gremlinsItr = gremlins.iterator();</span>
+
+<span class="fc" id="L141">        boolean isPlayerHit = false;</span>
+<span class="fc bfc" id="L142" title="All 2 branches covered.">        while (gremlinsItr.hasNext()) {</span>
+<span class="fc" id="L143">            Gremlin gremlin = gremlinsItr.next();</span>
+
+<span class="pc bpc" id="L145" title="1 of 2 branches missed.">            if (gremlin.isAlive == true) {</span>
+<span class="fc" id="L146">                Boolean[] isCollidingWithWall = CollisionDetector.checkCollisions(player, gremlin); </span>
+
+<span class="pc bpc" id="L148" title="1 of 2 branches missed.">                for (Boolean col: isCollidingWithWall) {</span>
+<span class="fc bfc" id="L149" title="All 2 branches covered.">                    if (col == true) {</span>
+<span class="fc" id="L150">                        gremlinsItr.remove();</span>
+                        
+<span class="fc" id="L152">                        isPlayerHit = true;</span>
+<span class="fc" id="L153">                        player.damage();</span>
+<span class="fc" id="L154">                        player.resetToOrigin();</span>
+<span class="fc" id="L155">                        break;</span>
+                    }
+                } 
+            }
+<span class="fc" id="L159">        }</span>
+
+<span class="fc" id="L161">        Object[] playerGremlinCollisionData = new Object[]{gremlins, isPlayerHit};</span>
+
+<span class="fc" id="L163">        return playerGremlinCollisionData;</span>
+    }
+
+    public static Object[] checkFireballGremlinCollision(Fireball fireball, ArrayList&lt;Gremlin&gt; gremlins) {
+<span class="nc" id="L167">        Iterator&lt;Gremlin&gt; gremlinsItr = gremlins.iterator();</span>
+
+<span class="nc" id="L169">        boolean isFireballDestroyed = false;</span>
+<span class="nc bnc" id="L170" title="All 2 branches missed.">        while (gremlinsItr.hasNext()) {</span>
+<span class="nc" id="L171">            Gremlin gremlin = gremlinsItr.next();</span>
+
+<span class="nc" id="L173">            Boolean[] isCollidingWithWall = CollisionDetector.checkCollisions(fireball, gremlin); </span>
+
+<span class="nc bnc" id="L175" title="All 2 branches missed.">            for (Boolean col: isCollidingWithWall) {</span>
+<span class="nc bnc" id="L176" title="All 2 branches missed.">                if (col == true) {</span>
+<span class="nc" id="L177">                    gremlin.kill();</span>
+<span class="nc" id="L178">                    isFireballDestroyed = true;</span>
+                }
+            }
+<span class="nc" id="L181">        }</span>
+
+<span class="nc" id="L183">        Object[] fireballGremlinCollisionData = new Object[]{gremlins, isFireballDestroyed};</span>
+
+<span class="nc" id="L185">        return fireballGremlinCollisionData;</span>
+    }
+
+    public static Object[] checkSlimePlayerCollision(Player player, ArrayList&lt;Slime&gt; activeSlimes) {
+<span class="nc" id="L189">        Iterator&lt;Slime&gt; slimeItr = activeSlimes.iterator();</span>
+
+<span class="nc" id="L191">        boolean isSlimeDestroyed = false;</span>
+<span class="nc bnc" id="L192" title="All 2 branches missed.">        while (slimeItr.hasNext()) {</span>
+<span class="nc" id="L193">            Slime slime = slimeItr.next();</span>
+
+<span class="nc" id="L195">            Boolean[] isCollidingWithWall = CollisionDetector.checkCollisions(slime, player); </span>
+
+<span class="nc bnc" id="L197" title="All 2 branches missed.">            for (Boolean col: isCollidingWithWall) {</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">                if (col == true) {</span>
+<span class="nc" id="L199">                    player.damage();</span>
+<span class="nc" id="L200">                    player.resetToOrigin();</span>
+<span class="nc" id="L201">                    isSlimeDestroyed = true;</span>
+                }
+            }
+<span class="nc" id="L204">        }</span>
+
+<span class="nc" id="L206">        Object[] playerSlimeCollisionData = new Object[]{activeSlimes, isSlimeDestroyed};</span>
+
+<span class="nc" id="L208">        return playerSlimeCollisionData;</span>
+    }
+
+
+    public static ArrayList&lt;Slime&gt; monitorGremlinSpawns(Player player, ArrayList&lt;Gremlin&gt; gremlins, ArrayList&lt;Ground&gt; groundTiles, ArrayList&lt;Slime&gt; activeSlimes) {
+<span class="nc" id="L213">        Iterator&lt;Gremlin&gt; gremlinsItr = gremlins.iterator();</span>
+
+<span class="nc bnc" id="L215" title="All 2 branches missed.">        while (gremlinsItr.hasNext()) {</span>
+<span class="nc" id="L216">            Gremlin gremlin = gremlinsItr.next();</span>
+
+<span class="nc" id="L218">            boolean isShootAvailable = gremlin.isShootAvailable();</span>
+<span class="nc" id="L219">            boolean requiresRespawn = gremlin.requiresRespawn();</span>
+
+<span class="nc bnc" id="L221" title="All 2 branches missed.">            if (requiresRespawn == true) {</span>
+<span class="nc" id="L222">                gremlin.respawn(player, groundTiles);      </span>
+            }
+
+<span class="nc bnc" id="L225" title="All 2 branches missed.">            if (isShootAvailable == true) {</span>
+<span class="nc" id="L226">                Slime slime = new Slime(gremlin.context, gremlin.posX, gremlin.posY, gremlin.headingDirection);</span>
+<span class="nc" id="L227">                activeSlimes.add(slime);</span>
+            } 
+<span class="nc" id="L229">        }</span>
+
+<span class="nc" id="L231">        return activeSlimes;</span>
+
+    }
+
+    public static boolean checkPlayerAtExit(Player player, EscapeDoor escapeDoor) {
+<span class="nc" id="L236">        Boolean isDoorColliding = CollisionDetector.isColliding(player, escapeDoor);  </span>
+
+<span class="nc bnc" id="L238" title="All 2 branches missed.">        if (isDoorColliding == true) {</span>
+<span class="nc" id="L239">            return true;</span>
+        }
+
+<span class="nc" id="L242">        return false;</span>
+    }
+
+    public static void checkPlayerGainsLife(Player player, Life life) {
+<span class="nc" id="L246">        Boolean isLifeColliding = CollisionDetector.isColliding(player, life);  </span>
+
+<span class="nc bnc" id="L248" title="All 4 branches missed.">        if ((isLifeColliding == true) &amp;&amp; (life.isActive == true)) {</span>
+<span class="nc" id="L249">            player.health.numLives += 1;</span>
+<span class="nc" id="L250">            life.isActive = false;</span>
+        }
+<span class="nc" id="L252">    }</span>
+
+    public static void handleLifePowerUpSpawn(Player player, Life life, ArrayList&lt;Ground&gt;groundTiles) {
+<span class="nc" id="L255">        boolean requiresRespawn = life.requiresRespawn();</span>
+
+<span class="nc bnc" id="L257" title="All 2 branches missed.">        if (requiresRespawn == true) {</span>
+<span class="nc" id="L258">            life.respawn(player, groundTiles);</span>
+        }
+<span class="nc" id="L260">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

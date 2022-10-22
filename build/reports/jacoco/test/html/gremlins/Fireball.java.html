@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Fireball.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gremlins_scaffold</a> &gt; <a href="index.source.html" class="el_package">gremlins</a> &gt; <span class="el_source">Fireball.java</span></div><h1>Fireball.java</h1><pre class="source lang-java linenums">package gremlins;
+
+import processing.core.PApplet;
+import processing.core.PImage;
+
+public class Fireball extends Collider {
+    public PImage image;
+
+    public float velocityX;
+    public float velocityY;
+
+    public int headingDirection;
+
+    public Fireball(PApplet app, float startX, float startY, float xVelocity, float yVelocity, int heading) {
+<span class="fc" id="L15">        super(app, startX, startY);</span>
+
+        try {
+<span class="nc" id="L18">            this.image = app.loadImage(app.getClass().getResource(&quot;fireball.png&quot;).getPath().replace(&quot;%20&quot;, &quot;&quot;));</span>
+<span class="fc" id="L19">        } catch (Exception e) {</span>
+            // Do nothing we are in testing;
+<span class="nc" id="L21">        }</span>
+<span class="fc" id="L22">        this.velocityX = xVelocity;</span>
+<span class="fc" id="L23">        this.velocityY = yVelocity;</span>
+
+<span class="fc" id="L25">        this.headingDirection = heading;</span>
+<span class="fc" id="L26">    }</span>
+
+    public void move(PApplet app) {
+<span class="nc" id="L29">        this.posX = this.posX + this.velocityX;</span>
+<span class="nc" id="L30">        this.posY = this.posY + this.velocityY;</span>
+
+<span class="nc" id="L32">        this.bounds.setBounds(this.posX, this.posY);</span>
+<span class="nc" id="L33">        app.image(this.image, this.posX, this.posY);</span>
+<span class="nc" id="L34">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

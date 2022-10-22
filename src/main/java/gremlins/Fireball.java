@@ -14,8 +14,11 @@ public class Fireball extends Collider {
     public Fireball(PApplet app, float startX, float startY, float xVelocity, float yVelocity, int heading) {
         super(app, startX, startY);
 
-        this.image = app.loadImage(app.getClass().getResource("fireball.png").getPath().replace("%20", ""));
-
+        try {
+            this.image = app.loadImage(app.getClass().getResource("fireball.png").getPath().replace("%20", ""));
+        } catch (Exception e) {
+            // Do nothing we are in testing;
+        }
         this.velocityX = xVelocity;
         this.velocityY = yVelocity;
 

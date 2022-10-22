@@ -9,6 +9,6 @@ public class SampleTest {
 
     @Test
     public void simpleTest() {
-        
+        assert(1==1);
     }
 }
