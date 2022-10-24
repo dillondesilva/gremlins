@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Runner.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gremlins_scaffold</a> &gt; <a href="index.source.html" class="el_package">gremlins</a> &gt; <span class="el_source">Runner.java</span></div><h1>Runner.java</h1><pre class="source lang-java linenums">package gremlins;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+
+public class Runner {
+    public App context;
+    public Player player;
+
+<span class="nc" id="L10">    public Runner(App app) {</span>
+<span class="nc" id="L11">        this.context = app;</span>
+<span class="nc" id="L12">    }</span>
+
+    private void handlePlayerMovement() {
+<span class="nc" id="L15">        boolean[] playerWallCollisions = Engine.checkWallCollisions(this.context.player, this.context.activeStoneWalls, this.context.activeBrickWalls, this.context.icewall);</span>
+<span class="nc" id="L16">        Player player = this.context.player;</span>
+<span class="nc bnc" id="L17" title="All 2 branches missed.">        if (this.context.boundsCheckInProgress == true) {</span>
+<span class="nc" id="L18">            this.context.boundsCheckInProgress = Engine.adjustPlayerPosition(player);</span>
+<span class="nc bnc" id="L19" title="All 4 branches missed.">        } else if ((player.directionFacing == &quot;Left&quot;) &amp;&amp; (playerWallCollisions[0] == false)) {</span>
+<span class="nc" id="L20">            player.move();</span>
+<span class="nc bnc" id="L21" title="All 4 branches missed.">        } else if ((player.directionFacing == &quot;Right&quot;) &amp;&amp; (playerWallCollisions[1] == false)) {</span>
+<span class="nc" id="L22">            player.move();</span>
+<span class="nc bnc" id="L23" title="All 4 branches missed.">        } else if ((player.directionFacing == &quot;Up&quot;) &amp;&amp; (playerWallCollisions[2] == false)) {</span>
+<span class="nc" id="L24">            player.move();</span>
+<span class="nc bnc" id="L25" title="All 4 branches missed.">        } else if ((player.directionFacing == &quot;Down&quot;) &amp;&amp; (playerWallCollisions[3] == false)) {</span>
+<span class="nc" id="L26">            player.move();</span>
+        }
+<span class="nc" id="L28">    }</span>
+
+    private void handleActiveFireballs() {
+<span class="nc" id="L31">        Iterator&lt;Fireball&gt; fireballItr = this.context.activeFireballs.iterator();</span>
+     
+<span class="nc bnc" id="L33" title="All 2 branches missed.">        while (fireballItr.hasNext()) {</span>
+<span class="nc" id="L34">            Fireball fireball = fireballItr.next();</span>
+            
+<span class="nc" id="L36">            this.context.activeBrickWalls = Engine.renderBrickWalls(fireball, this.context.activeBrickWalls);</span>
+<span class="nc" id="L37">            Object[] fireballGremlinCollisionData = Engine.checkFireballGremlinCollision(fireball, this.context.activeGremlins);</span>
+            
+<span class="nc" id="L39">            this.context.activeGremlins = (ArrayList&lt;Gremlin&gt;)fireballGremlinCollisionData[0];</span>
+            
+<span class="nc" id="L41">            boolean isIceWallActivated = Engine.checkIceWallActivated(fireball, this.context.icewall);</span>
+<span class="nc" id="L42">            boolean isFireballDestroyed = (Engine.handleFireball(fireball, this.context.activeStoneWalls, this.context.activeBrickWalls)) | isIceWallActivated;</span>
+            
+<span class="nc bnc" id="L44" title="All 2 branches missed.">            if (isIceWallActivated) {</span>
+<span class="nc" id="L45">                this.context.icewallProgress.isActive = true;</span>
+            }
+
+<span class="nc bnc" id="L48" title="All 2 branches missed.">            if (isFireballDestroyed == true) {</span>
+<span class="nc" id="L49">                fireballItr.remove();</span>
+            } else {
+<span class="nc" id="L51">                fireball.move();</span>
+            }
+<span class="nc" id="L53">        }</span>
+<span class="nc" id="L54">    }</span>
+
+    public void run() {
+<span class="nc" id="L57">        this.handlePlayerMovement();</span>
+<span class="nc" id="L58">        this.handleActiveFireballs();</span>
+<span class="nc" id="L59">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

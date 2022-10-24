@@ -5,10 +5,23 @@ import processing.core.PImage;
 
 public class Projectile extends Collider {
     public PImage image;
+    public int headingDirection;
 
-    public Projectile(PApplet app, float x, float y, String imgSrc) {
-<span class="nc" id="L10">        super(app, x, y);</span>
-<span class="nc" id="L11">        this.image = app.loadImage(app.getClass().getResource(imgSrc).getPath().replace(&quot;%20&quot;, &quot;&quot;));</span>
-<span class="nc" id="L12">    }</span>
+    public Projectile(PApplet app, float x, float y, String imgSrc, int heading) {
+<span class="fc" id="L11">        super(app, x, y);</span>
+<span class="fc" id="L12">        this.headingDirection = heading;</span>
+
+        try {
+<span class="nc" id="L15">            this.image = app.loadImage(app.getClass().getResource(imgSrc).getPath().replace(&quot;%20&quot;, &quot;&quot;));</span>
+<span class="fc" id="L16">        } catch (Exception e) {</span>
+            // Do nothing as we are in testing;
+<span class="nc" id="L18">        }</span>
+<span class="fc" id="L19">    }</span>
+
+    public void draw() {
+<span class="nc" id="L22">        this.context.image(this.image, this.posX, this.posY);</span>
+<span class="nc" id="L23">    }</span>
+
+
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

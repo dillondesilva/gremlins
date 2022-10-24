@@ -7,14 +7,26 @@ import java.util.ArrayList;
 import processing.core.PApplet;
 
 public class IceWall extends Wall {
+
     public Instant lastSpawn;
     public boolean isActive;
+    public boolean brickDestroyInProgress;
+    public boolean inEffect;
+    public int wallHealth;
+
+    public Instant lastInEffectTime;
     
     public IceWall(PApplet app, float x, float y) {
         super(app, x, y, "icewall.png", "ice");
 
         this.lastSpawn = Instant.now();
         this.isActive = false;
+        this.brickDestroyInProgress = false;
+        this.inEffect = false;
+
+        this.wallHealth = 3;
+
+        this.lastInEffectTime = Instant.now();
     }
 
     public boolean requiresRespawn() {
@@ -31,20 +43,48 @@ public class IceWall extends Wall {
     }
 
     public void respawn(Collider player, ArrayList<Ground> groundTiles) {
-        for (Ground groundTile: groundTiles) {
-            double distanceToPlayer = CollisionDetector.getDistanceBetween(player, groundTile);
-            
-            if ((distanceToPlayer > 100) && (distanceToPlayer < 200)) {
-                this.posX = groundTile.posX;
-                this.posY = groundTile.posY;
-
-                this.bounds.setBounds(this.posX, this.posY);
+        Integer randomGroundTileIdx = (int)Math.floor(Math.random() * groundTiles.size());
+        Ground groundTile = groundTiles.get(randomGroundTileIdx);
         
-                this.isActive = true;
-                this.lastSpawn = Instant.now();
+        this.posX = groundTile.posX;
+        this.posY = groundTile.posY;
 
-                break;
-            }
+        this.bounds.setBounds(this.posX, this.posY);
+        this.wallHealth = 3;
+        this.image = this.context.loadImage(this.context.getClass().getResource("icewall.png").getPath().replace("%20", "")); 
+        this.isActive = true;
+        
+        this.lastSpawn = Instant.now();
+    }
+
+    public boolean getInEffect() {
+        return this.inEffect;
+    }
+
+    public void damage() {
+        this.wallHealth -= 1;
+        if (this.wallHealth > 0) {
+            String imgSrc = String.format("icewall_destroyed%d.png", 3 - wallHealth);
+            this.image = this.context.loadImage(this.context.getClass().getResource(imgSrc).getPath().replace("%20", ""));
+        }
+    }
+
+    public void tick() {
+        if (this.inEffect == true) {
+            Instant currentTime = Instant.now();
+            Duration timeSinceLastInEffect = Duration.between(this.lastInEffectTime, currentTime);
+            
+            if (timeSinceLastInEffect.toMillis() > 3000) {
+                this.inEffect = false;
+                this.lastInEffectTime = Instant.now();
+            } 
+        }
+
+        if (this.wallHealth == 0) {
+            this.brickDestroyInProgress = false;
+            this.isActive = false;
+        } else if (this.brickDestroyInProgress == true) {
+            this.damage();
         }
     }
 

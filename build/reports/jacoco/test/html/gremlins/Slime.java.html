@@ -6,37 +6,33 @@ public class Slime extends Projectile {
     public float velocityX;
     public float velocityY;
 
-    public int headingDirection;
-
     public Slime(PApplet app, float x, float y, int heading) {
-<span class="nc" id="L12">        super(app, x, y, &quot;slime.png&quot;);</span>
+<span class="nc" id="L10">        super(app, x, y, &quot;slime.png&quot;, heading);</span>
 
-<span class="nc" id="L14">        this.headingDirection = heading;</span>
-
-<span class="nc bnc" id="L16" title="All 2 branches missed.">        if (this.headingDirection == 0) {</span>
-<span class="nc" id="L17">            this.velocityX = -4;</span>
-<span class="nc" id="L18">            this.velocityY = 0;</span>
-<span class="nc bnc" id="L19" title="All 2 branches missed.">        } else if (this.headingDirection == 1) {</span>
-<span class="nc" id="L20">            this.velocityX = 4;</span>
-<span class="nc" id="L21">            this.velocityY = 0;</span>
-<span class="nc bnc" id="L22" title="All 2 branches missed.">        } else if (this.headingDirection == 2) {</span>
-<span class="nc" id="L23">            this.velocityX = 0;</span>
-<span class="nc" id="L24">            this.velocityY = -4;</span>
+<span class="nc bnc" id="L12" title="All 2 branches missed.">        if (this.headingDirection == 0) {</span>
+<span class="nc" id="L13">            this.velocityX = -4;</span>
+<span class="nc" id="L14">            this.velocityY = 0;</span>
+<span class="nc bnc" id="L15" title="All 2 branches missed.">        } else if (this.headingDirection == 1) {</span>
+<span class="nc" id="L16">            this.velocityX = 4;</span>
+<span class="nc" id="L17">            this.velocityY = 0;</span>
+<span class="nc bnc" id="L18" title="All 2 branches missed.">        } else if (this.headingDirection == 2) {</span>
+<span class="nc" id="L19">            this.velocityX = 0;</span>
+<span class="nc" id="L20">            this.velocityY = -4;</span>
         } else {
-<span class="nc" id="L26">            this.velocityX = 0;</span>
-<span class="nc" id="L27">            this.velocityY = 4;</span>
+<span class="nc" id="L22">            this.velocityX = 0;</span>
+<span class="nc" id="L23">            this.velocityY = 4;</span>
         }
-<span class="nc" id="L29">    }</span>
+<span class="nc" id="L25">    }</span>
 
     public void move() {
-<span class="nc" id="L32">        this.posX = this.posX + this.velocityX;</span>
-<span class="nc" id="L33">        this.posY = this.posY + this.velocityY;</span>
+<span class="nc" id="L28">        this.posX = this.posX + this.velocityX;</span>
+<span class="nc" id="L29">        this.posY = this.posY + this.velocityY;</span>
 
-<span class="nc" id="L35">        this.bounds.setBounds(this.posX, this.posY);</span>
-<span class="nc" id="L36">    }</span>
+<span class="nc" id="L31">        this.bounds.setBounds(this.posX, this.posY);</span>
+<span class="nc" id="L32">    }</span>
 
     public void draw(PApplet app) {
-<span class="nc" id="L39">        app.image(this.image, this.posX, this.posY);</span>
-<span class="nc" id="L40">    }</span>
+<span class="nc" id="L35">        app.image(this.image, this.posX, this.posY);</span>
+<span class="nc" id="L36">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

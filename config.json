@@ -1,6 +1,11 @@
 {
   "levels": [
     {
+      "layout": "level3.txt",
+      "wizard_cooldown": 2.0,
+      "enemy_cooldown": 1.0 
+    },
+    {
       "layout": "level1.txt",
       "wizard_cooldown": 0.3333,
       "enemy_cooldown": 3.0
@@ -9,11 +14,6 @@
       "layout": "level2.txt",
       "wizard_cooldown": 2.0,
       "enemy_cooldown": 1.0
-    },
-    {
-      "layout": "level3.txt",
-      "wizard_cooldown": 2.0,
-      "enemy_cooldown": 1.0 
     }
   ],
   "lives": 3

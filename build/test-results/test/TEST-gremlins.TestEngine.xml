@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="gremlins.TestEngine" tests="3" skipped="0" failures="1" errors="0" timestamp="2022-10-22T07:46:42" hostname="Dillons-MacBook-Air.local" time="0.023">
+<testsuite name="gremlins.TestEngine" tests="3" skipped="0" failures="1" errors="0" timestamp="2022-10-23T13:56:56" hostname="Dillons-MacBook-Air.local" time="0.027">
   <properties/>
-  <testcase name="testPlayerWallCollisions()" classname="gremlins.TestEngine" time="0.011"/>
-  <testcase name="testHandleFireball()" classname="gremlins.TestEngine" time="0.007"/>
-  <testcase name="testPlayerGremlinCollisions()" classname="gremlins.TestEngine" time="0.004">
+  <testcase name="testPlayerWallCollisions()" classname="gremlins.TestEngine" time="0.018"/>
+  <testcase name="testHandleFireball()" classname="gremlins.TestEngine" time="0.004"/>
+  <testcase name="testPlayerGremlinCollisions()" classname="gremlins.TestEngine" time="0.003">
     <failure message="org.opentest4j.AssertionFailedError: expected: &lt;0&gt; but was: &lt;1&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: expected: &lt;0&gt; but was: &lt;1&gt;
 	at org.junit.jupiter.api.AssertionUtils.fail(AssertionUtils.java:55)
 	at org.junit.jupiter.api.AssertionUtils.failNotEqual(AssertionUtils.java:62)

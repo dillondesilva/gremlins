@@ -1,6 +1,8 @@
 package gremlins;
 
 
+import java.time.Instant;
+
 import processing.core.PApplet;
 import processing.core.PImage;
 
@@ -13,10 +15,13 @@ public class Player extends Collider {
 
     public Health health; 
 
+    public double fireballCooldown;
+    public Instant lastFireTime;
+     
     private float originX;
     private float originY;
 
-    public Player(PApplet app, float x, float y, int lives) {
+    public Player(PApplet app, float x, float y, int lives, double cooldown) {
         super(app, x, y);
 
         this.originX = x;
@@ -31,6 +36,9 @@ public class Player extends Collider {
         this.velocityY = 0;
         
         this.directionFacing = "Right";
+
+        this.fireballCooldown = cooldown;
+        this.lastFireTime = Instant.ofEpochSecond(1);
 
         this.health = new Health(app, lives);
     }

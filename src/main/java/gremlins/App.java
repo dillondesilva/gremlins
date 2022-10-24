@@ -45,6 +45,14 @@ public class App extends PApplet {
     public boolean isWon = true;
     public int gameActiveState;
 
+    public boolean boundsCheckInProgress;
+    public boolean validMoveKeyPressed;
+
+    public Progress fireballProgress;
+    public Progress icewallProgress;
+
+    public boolean isGremlinsFrozen;
+
     public char[][] map = new char[37][37];
 
     public ArrayList<Fireball> activeFireballs = new ArrayList<Fireball>();
@@ -57,6 +65,11 @@ public class App extends PApplet {
     public ArrayList<Slime> activeSlimes = new ArrayList<Slime>();
 
     public EscapeDoor escapeDoor;
+
+    public JSONObject configuration;
+    public JSONArray levelsData;
+
+    private Runner runner;
 
     public App() {
         this.configPath = "config.json";
@@ -77,10 +90,10 @@ public class App extends PApplet {
         this.gameActiveState = 0; 
 
         try {
-            JSONObject conf = loadJSONObject(new File(this.configPath));
-            JSONArray newObj = conf.getJSONArray("levels");
+            configuration = loadJSONObject(new File(this.configPath));
+            levelsData = configuration.getJSONArray("levels");
             
-            this.numLevels = newObj.size();
+            this.numLevels = levelsData.size();
         } catch (Exception e) {
             System.out.println("Error loading game. Please check configuration");
         }
@@ -92,8 +105,8 @@ public class App extends PApplet {
     }
 
     public void initializeLevel(int levelNum, int numLives) {
-        String levelFileName = String.format("level%d.txt", levelNum);
-        
+        // String levelFileName = String.format("level%d.txt", levelNum);
+
         activeFireballs = new ArrayList<Fireball>();
         activeGremlins = new ArrayList<Gremlin>();
         activeWalls = new ArrayList<Wall>();
@@ -106,9 +119,21 @@ public class App extends PApplet {
         lifePowerup = new Life(this, 0, 0);
         icewall = new IceWall(this, 0, 0);
         
+        fireballProgress = new Progress(this, 500, 670, 120, 10);
+        icewallProgress = new Progress(this, 500, 690, 120, 10);
+
+        boundsCheckInProgress = false;
+        validMoveKeyPressed = false;
+
+        runner = new Runner(this);
+        
+        JSONObject levelData = this.levelsData.getJSONObject(levelNum - 1);
+        double fireballCooldown = (double)levelData.get("wizard_cooldown") * 1000;
+        String levelFileName = (String)levelData.get("layout");
+
         try {
-            File levelData = new File(levelFileName);
-            Scanner levelScanner = new Scanner(levelData).useDelimiter("\n");
+            File layoutFile = new File(levelFileName);
+            Scanner levelScanner = new Scanner(layoutFile).useDelimiter("\n");
 
             map = new char[37][37];
 
@@ -131,7 +156,7 @@ public class App extends PApplet {
                         float x = colCount * 20;
                         float y = rowCount * 20;
 
-                        this.player = new Player(this, colCount * 20, rowCount * 20, numLives);
+                        this.player = new Player(this, colCount * 20, rowCount * 20, numLives, fireballCooldown);
                         // this.player.moveTo(this, colCount * 20, rowCount * 20);
                     } else if (tile == 'G') {
                         Gremlin gremlin = new Gremlin(this);
@@ -141,7 +166,7 @@ public class App extends PApplet {
 
                         gremlin.moveTo(this, colCount * 20, rowCount * 20);
             
-                        boolean[] collidingWalls = Engine.checkWallCollisions(gremlin, activeStoneWalls, activeBrickWalls);
+                        boolean[] collidingWalls = Engine.checkWallCollisions(gremlin, activeStoneWalls, activeBrickWalls, icewall);
                         int newGremlinHeading = (int)Math.floor(Math.random() * (3 + 1));
                         while (collidingWalls[newGremlinHeading] == true) {
                             newGremlinHeading = (int)Math.floor(Math.random() * (3 + 1)); 
@@ -179,36 +204,24 @@ public class App extends PApplet {
      * Receive key pressed signal from the keyboard.
     */
     public void keyPressed(){
-        if (this.keyCode == 37) {
-            this.player.moveLeft(this);
+        if ((validMoveKeyPressed == false) && (boundsCheckInProgress == false)) {
+            if (this.keyCode == 37) {
+                validMoveKeyPressed = true;
+                this.player.moveLeft(this);
+            } else if (this.keyCode == 38) {
+                validMoveKeyPressed = true;
+                this.player.moveUp(this);
+            } else if (this.keyCode == 39) {
+                validMoveKeyPressed = true;
+                this.player.moveRight(this);
+            } else if (this.keyCode == 40) {
+                validMoveKeyPressed = true;
+                this.player.moveDown(this);
+            }      
         }
-
-        if (this.keyCode == 38) {
-            this.player.moveUp(this);
-        } 
-
-        if (this.keyCode == 39) {
-            this.player.moveRight(this);
-        }
-
-        if (this.keyCode == 40) {
-            this.player.moveDown(this);
-        } 
 
         if (this.keyCode == 32) {
-            if (this.player.directionFacing.equals("Right")) {
-                Fireball newFireball = new Fireball(this, this.player.posX, this.player.posY, 4, 0, 1);
-                activeFireballs.add(newFireball);
-            } else if (this.player.directionFacing.equals("Left")) {
-                Fireball newFireball = new Fireball(this, this.player.posX, this.player.posY, -4, 0, 0);
-                activeFireballs.add(newFireball);
-            } else if (this.player.directionFacing.equals("Up")) {
-                Fireball newFireball = new Fireball(this, this.player.posX, this.player.posY, 0, -4, 2);
-                activeFireballs.add(newFireball);
-            } else {
-                Fireball newFireball = new Fireball(this, this.player.posX, this.player.posY, 0, 4, 3);
-                activeFireballs.add(newFireball);
-            }
+            activeFireballs = Engine.attemptFireballShoot(this, player, activeFireballs);
         }
     }
     
@@ -216,8 +229,26 @@ public class App extends PApplet {
      * Receive key released signal from the keyboard.
     */
     public void keyReleased(){
-        this.player.velocityX = 0;
-        this.player.velocityY = 0;
+        if (this.keyCode == 37) {
+            System.out.println("left release");
+            boundsCheckInProgress = true;
+            validMoveKeyPressed = false;
+        }
+
+        if (this.keyCode == 38) {
+            boundsCheckInProgress = true;
+            validMoveKeyPressed = false;
+        } 
+
+        if (this.keyCode == 39) {
+            boundsCheckInProgress = true;
+            validMoveKeyPressed = false;
+        }
+
+        if (this.keyCode == 40) {
+            boundsCheckInProgress = true;
+            validMoveKeyPressed = false;
+        } 
     }
 
     public void drawMap() {
@@ -268,16 +299,19 @@ public class App extends PApplet {
 
         if (this.gameActiveState == 0) {
 
-            if (this.player.health.numLives == 0) {
-                this.gameActiveState = 2;
+            if (fireballProgress.isActive == true) {
+                fireballProgress.draw();  
+            }
+    
+            if (icewallProgress.isActive == true) {
+                icewallProgress.draw();  
             }
 
-            Engine.handleLifePowerUpSpawn(player, lifePowerup, groundTiles);
-            Engine.checkPlayerGainsLife(player, lifePowerup);
-
-            Engine.handleIceWallSpawn(player, icewall, groundTiles);
-            // Engine.checkPlayerShotWall(player, lifePowerup);
+            Object[] updatedFireballSlimeData = Engine.checkFireballSlimeCollisions(activeFireballs, activeSlimes);
             
+            activeFireballs = (ArrayList<Fireball>)updatedFireballSlimeData[0];
+            activeSlimes = (ArrayList<Slime>)updatedFireballSlimeData[1];
+
             if (icewall.isActive == true) {
                 icewall.draw();
             }
@@ -288,115 +322,30 @@ public class App extends PApplet {
 
             boolean isAtExit = Engine.checkPlayerAtExit(player, escapeDoor);
             activeSlimes = Engine.monitorGremlinSpawns(player, activeGremlins, groundTiles, activeSlimes);
+            
             if (isAtExit == true) {
                 loadNextLevel();
             }
 
-            Iterator<BrickWall> brickwallItr = this.activeBrickWalls.iterator();
-
-            while (brickwallItr.hasNext()) {
-                BrickWall brickwall = brickwallItr.next();
-
-                boolean isDestroyed = brickwall.tick();
-                    
-                if (isDestroyed == true) {
-
-                    brickwallItr.remove();
-                }
-  
-            }
-
             escapeDoor.draw();
-            boolean[] playerWallCollisions = Engine.checkWallCollisions(player, activeStoneWalls, activeBrickWalls);
+            boolean[] playerWallCollisions = Engine.checkWallCollisions(player, activeStoneWalls, activeBrickWalls, icewall);
               
             Object[] playerGremlinCollisionInfo = Engine.checkPlayerGremlinCollision(player, activeGremlins);
             boolean isPlayerHit = (boolean)playerGremlinCollisionInfo[1];
     
             activeGremlins = (ArrayList<Gremlin>)playerGremlinCollisionInfo[0];
-    
-            if ((this.player.directionFacing == "Left") && (playerWallCollisions[0] == false)) {
-                this.player.move();
-            } else if ((this.player.directionFacing == "Right") && (playerWallCollisions[1] == false)) {
-                this.player.move();
-            } else if ((this.player.directionFacing == "Up") && (playerWallCollisions[2] == false)) {
-                this.player.move();
-            } else if ((this.player.directionFacing == "Down") && (playerWallCollisions[3] == false)) {
-                this.player.move();
-            }
-    
+
+            this.runner.run();
             this.player.draw(this);
-    
-            Iterator<Fireball> fireballItr = activeFireballs.iterator();
-            
-            while (fireballItr.hasNext()) {
-                Fireball fireball = fireballItr.next();
-    
-                activeBrickWalls = Engine.renderBrickWalls(fireball, activeBrickWalls);
-                Object[] fireballGremlinCollisionData = Engine.checkFireballGremlinCollision(fireball, activeGremlins);
-                activeGremlins = (ArrayList<Gremlin>)fireballGremlinCollisionData[0];
-                boolean isFireballDestroyed = (Engine.handleFireball(fireball, activeStoneWalls, activeBrickWalls));
-                
-                if (isFireballDestroyed == false) {
-                    fireball.move(this);    
-                } else {
-                    fireballItr.remove();      
-                }   
-            }
-    
+
             for (Gremlin gremlin: activeGremlins) {
-                boolean[] collidingWalls = Engine.checkWallCollisions(gremlin, activeStoneWalls, activeBrickWalls);
-                int currentGremlinHeading = gremlin.headingDirection;
-                ArrayList<Integer> possibleHeadings = new ArrayList<Integer>();
-
-                int heading = 0;
-                while (heading < collidingWalls.length) {
-                    if (collidingWalls[heading] == true) {
-                        possibleHeadings.add(heading);
-                    }
-
-                    heading += 1;
-                }
-                
                 if (gremlin.isAlive == true) {
-                    if ((collidingWalls[currentGremlinHeading] == true)) {
-                        int newGremlinHeading = (int)Math.floor(Math.random() * (3 + 1));
-
-                        if (possibleHeadings.size() > 1) {
-                            int oppositeHeading = Engine.getOppositeHeading(currentGremlinHeading);
-
-                            newGremlinHeading = (int)Math.floor(Math.random() * (3 + 1));
-
-                            while ((collidingWalls[newGremlinHeading] == true) && (newGremlinHeading == oppositeHeading)) {
-                                newGremlinHeading = (int)Math.floor(Math.random() * (3 + 1)); 
-                            } 
-                        }
-        
-                        gremlin.changeHeading(newGremlinHeading);
-                        gremlin.move();
-                        gremlin.draw(this);
-                    } else {
-                        gremlin.move();
-                        gremlin.draw(this);
-                    }  
+                    gremlin.draw(this);
                 }
             }
-    
-            Iterator<Slime> slimeItr = activeSlimes.iterator();
-    
-            
-            while (slimeItr.hasNext()) {
-                Slime slime = slimeItr.next();
-    
-                boolean isSlimeDestroyed = (Engine.handleSlime(slime, activeStoneWalls, activeBrickWalls));
-                Object[] playerSlimeCollisionData = Engine.checkSlimePlayerCollision(this.player, activeSlimes);
-                activeSlimes = (ArrayList<Slime>)playerSlimeCollisionData[0];
-                
-                if (isSlimeDestroyed == false) {
-                    slime.move();  
-                    slime.draw(this);  
-                } else {
-                    slimeItr.remove();      
-                }   
+
+            for (Slime slime: activeSlimes) {
+                slime.draw();
             }
 
             for (StoneWall stonewall: activeStoneWalls) {
@@ -406,6 +355,10 @@ public class App extends PApplet {
             
             for (BrickWall brickwall: activeBrickWalls) {
                 brickwall.draw(this);
+            }
+
+            for (Fireball fireball: activeFireballs) {
+                fireball.draw();
             }
 
             this.player.health.bar();

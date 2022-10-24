@@ -36,367 +36,429 @@ public class App extends PApplet {
     
     public BrickWall brickwall;
     public StoneWall stonewall;
+
     public Life lifePowerup;
+    public IceWall icewall;
 
     public Player player;
 
-<span class="fc" id="L43">    public boolean isWon = true;</span>
+<span class="fc" id="L45">    public boolean isWon = true;</span>
     public int gameActiveState;
 
-<span class="fc" id="L46">    public char[][] map = new char[37][37];</span>
+    public boolean boundsCheckInProgress;
+    public boolean validMoveKeyPressed;
 
-<span class="fc" id="L48">    public ArrayList&lt;Fireball&gt; activeFireballs = new ArrayList&lt;Fireball&gt;();</span>
-<span class="fc" id="L49">    public ArrayList&lt;Gremlin&gt; activeGremlins = new ArrayList&lt;Gremlin&gt;();</span>
-<span class="fc" id="L50">    public ArrayList&lt;Wall&gt; activeWalls = new ArrayList&lt;Wall&gt;();</span>
+    public Progress fireballProgress;
+    public Progress icewallProgress;
 
-<span class="fc" id="L52">    public ArrayList&lt;StoneWall&gt; activeStoneWalls = new ArrayList&lt;StoneWall&gt;();</span>
-<span class="fc" id="L53">    public ArrayList&lt;BrickWall&gt; activeBrickWalls = new ArrayList&lt;BrickWall&gt;();</span>
-<span class="fc" id="L54">    public ArrayList&lt;Ground&gt; groundTiles = new ArrayList&lt;Ground&gt;();</span>
-<span class="fc" id="L55">    public ArrayList&lt;Slime&gt; activeSlimes = new ArrayList&lt;Slime&gt;();</span>
+    public boolean isGremlinsFrozen;
+
+<span class="fc" id="L56">    public char[][] map = new char[37][37];</span>
+
+<span class="fc" id="L58">    public ArrayList&lt;Fireball&gt; activeFireballs = new ArrayList&lt;Fireball&gt;();</span>
+<span class="fc" id="L59">    public ArrayList&lt;Gremlin&gt; activeGremlins = new ArrayList&lt;Gremlin&gt;();</span>
+<span class="fc" id="L60">    public ArrayList&lt;Wall&gt; activeWalls = new ArrayList&lt;Wall&gt;();</span>
+
+<span class="fc" id="L62">    public ArrayList&lt;StoneWall&gt; activeStoneWalls = new ArrayList&lt;StoneWall&gt;();</span>
+<span class="fc" id="L63">    public ArrayList&lt;BrickWall&gt; activeBrickWalls = new ArrayList&lt;BrickWall&gt;();</span>
+<span class="fc" id="L64">    public ArrayList&lt;Ground&gt; groundTiles = new ArrayList&lt;Ground&gt;();</span>
+<span class="fc" id="L65">    public ArrayList&lt;Slime&gt; activeSlimes = new ArrayList&lt;Slime&gt;();</span>
 
     public EscapeDoor escapeDoor;
 
-<span class="fc" id="L59">    public App() {</span>
-<span class="fc" id="L60">        this.configPath = &quot;config.json&quot;;</span>
-<span class="fc" id="L61">    }</span>
+    public JSONObject configuration;
+    public JSONArray levelsData;
+
+    private Runner runner;
+
+<span class="fc" id="L74">    public App() {</span>
+<span class="fc" id="L75">        this.configPath = &quot;config.json&quot;;</span>
+<span class="fc" id="L76">    }</span>
 
     /**
      * Initialise the setting of the window size.
     */
     public void settings() {
-<span class="nc" id="L67">        size(WIDTH, HEIGHT);</span>
-<span class="nc" id="L68">    }</span>
+<span class="nc" id="L82">        size(WIDTH, HEIGHT);</span>
+<span class="nc" id="L83">    }</span>
 
     /**
      * Load all resources such as images. Initialise the elements such as the player, enemies and map elements.
     */
     public void setup() {
-<span class="nc" id="L74">        frameRate(FPS);</span>
-<span class="nc" id="L75">        this.gameActiveState = 0; </span>
+<span class="nc" id="L89">        frameRate(FPS);</span>
+<span class="nc" id="L90">        this.gameActiveState = 0; </span>
 
         try {
-<span class="nc" id="L78">            JSONObject conf = loadJSONObject(new File(this.configPath));</span>
-<span class="nc" id="L79">            JSONArray newObj = conf.getJSONArray(&quot;levels&quot;);</span>
+<span class="nc" id="L93">            configuration = loadJSONObject(new File(this.configPath));</span>
+<span class="nc" id="L94">            levelsData = configuration.getJSONArray(&quot;levels&quot;);</span>
             
-<span class="nc" id="L81">            this.numLevels = newObj.size();</span>
-<span class="nc" id="L82">        } catch (Exception e) {</span>
-<span class="nc" id="L83">            System.out.println(&quot;Error loading game. Please check configuration&quot;);</span>
-<span class="nc" id="L84">        }</span>
+<span class="nc" id="L96">            this.numLevels = levelsData.size();</span>
+<span class="nc" id="L97">        } catch (Exception e) {</span>
+<span class="nc" id="L98">            System.out.println(&quot;Error loading game. Please check configuration&quot;);</span>
+<span class="nc" id="L99">        }</span>
 
-<span class="nc" id="L86">        this.currentLevel = 1;</span>
-<span class="nc" id="L87">        initializeLevel(this.currentLevel, 3);</span>
-        
-<span class="nc" id="L89">        drawMap();</span>
-<span class="nc" id="L90">    }</span>
+<span class="nc" id="L101">        this.currentLevel = 1;</span>
+<span class="nc" id="L102">        initializeLevel(this.currentLevel, 3);</span>
+
+<span class="nc" id="L104">        drawMap();</span>
+<span class="nc" id="L105">    }</span>
 
     public void initializeLevel(int levelNum, int numLives) {
-<span class="nc" id="L93">        String levelFileName = String.format(&quot;level%d.txt&quot;, levelNum);</span>
-        
-<span class="nc" id="L95">        activeFireballs = new ArrayList&lt;Fireball&gt;();</span>
-<span class="nc" id="L96">        activeGremlins = new ArrayList&lt;Gremlin&gt;();</span>
-<span class="nc" id="L97">        activeWalls = new ArrayList&lt;Wall&gt;();</span>
+        // String levelFileName = String.format(&quot;level%d.txt&quot;, levelNum);
 
-<span class="nc" id="L99">        activeStoneWalls = new ArrayList&lt;StoneWall&gt;();</span>
-<span class="nc" id="L100">        activeBrickWalls = new ArrayList&lt;BrickWall&gt;();</span>
-<span class="nc" id="L101">        groundTiles = new ArrayList&lt;Ground&gt;();</span>
-<span class="nc" id="L102">        activeSlimes = new ArrayList&lt;Slime&gt;();</span>
+<span class="nc" id="L110">        activeFireballs = new ArrayList&lt;Fireball&gt;();</span>
+<span class="nc" id="L111">        activeGremlins = new ArrayList&lt;Gremlin&gt;();</span>
+<span class="nc" id="L112">        activeWalls = new ArrayList&lt;Wall&gt;();</span>
 
-<span class="nc" id="L104">        lifePowerup = new Life(this, 0, 0);</span>
+<span class="nc" id="L114">        activeStoneWalls = new ArrayList&lt;StoneWall&gt;();</span>
+<span class="nc" id="L115">        activeBrickWalls = new ArrayList&lt;BrickWall&gt;();</span>
+<span class="nc" id="L116">        groundTiles = new ArrayList&lt;Ground&gt;();</span>
+<span class="nc" id="L117">        activeSlimes = new ArrayList&lt;Slime&gt;();</span>
+
+<span class="nc" id="L119">        lifePowerup = new Life(this, 0, 0);</span>
+<span class="nc" id="L120">        icewall = new IceWall(this, 0, 0);</span>
         
+<span class="nc" id="L122">        fireballProgress = new Progress(this, 500, 670, 120, 10);</span>
+<span class="nc" id="L123">        icewallProgress = new Progress(this, 500, 690, 120, 10);</span>
+
+<span class="nc" id="L125">        boundsCheckInProgress = false;</span>
+<span class="nc" id="L126">        validMoveKeyPressed = false;</span>
+
+<span class="nc" id="L128">        runner = new Runner(this);</span>
+        
+<span class="nc" id="L130">        JSONObject levelData = this.levelsData.getJSONObject(levelNum - 1);</span>
+<span class="nc" id="L131">        double fireballCooldown = (double)levelData.get(&quot;wizard_cooldown&quot;) * 1000;</span>
+<span class="nc" id="L132">        String levelFileName = (String)levelData.get(&quot;layout&quot;);</span>
+
         try {
-<span class="nc" id="L107">            File levelData = new File(levelFileName);</span>
-<span class="nc" id="L108">            Scanner levelScanner = new Scanner(levelData).useDelimiter(&quot;\n&quot;);</span>
+<span class="nc" id="L135">            File layoutFile = new File(levelFileName);</span>
+<span class="nc" id="L136">            Scanner levelScanner = new Scanner(layoutFile).useDelimiter(&quot;\n&quot;);</span>
 
-<span class="nc" id="L110">            map = new char[37][37];</span>
+<span class="nc" id="L138">            map = new char[37][37];</span>
 
-<span class="nc" id="L112">            int rowCount = 0;</span>
-<span class="nc" id="L113">            int colCount = 0;</span>
+<span class="nc" id="L140">            int rowCount = 0;</span>
+<span class="nc" id="L141">            int colCount = 0;</span>
 
-<span class="nc bnc" id="L115" title="All 2 branches missed.">            while (levelScanner.hasNext()) {</span>
-<span class="nc" id="L116">                String tileRow = levelScanner.next();</span>
-<span class="nc" id="L117">                int tileRowCount = 0;</span>
-<span class="nc" id="L118">                System.out.println(tileRow);</span>
-<span class="nc bnc" id="L119" title="All 2 branches missed.">                while (tileRowCount &lt; tileRow.length()) {</span>
-<span class="nc" id="L120">                    char tile = tileRow.charAt(tileRowCount);</span>
+<span class="nc bnc" id="L143" title="All 2 branches missed.">            while (levelScanner.hasNext()) {</span>
+<span class="nc" id="L144">                String tileRow = levelScanner.next();</span>
+<span class="nc" id="L145">                int tileRowCount = 0;</span>
+<span class="nc" id="L146">                System.out.println(tileRow);</span>
+<span class="nc bnc" id="L147" title="All 2 branches missed.">                while (tileRowCount &lt; tileRow.length()) {</span>
+<span class="nc" id="L148">                    char tile = tileRow.charAt(tileRowCount);</span>
                     // System.out.printf(&quot;Row Count: %d, Col Count: %d, Character: %c\n&quot;, rowCount, colCount, tile);
-<span class="nc bnc" id="L122" title="All 2 branches missed.">                    if (colCount &gt; 36) {</span>
-<span class="nc" id="L123">                        colCount = 0;</span>
-<span class="nc" id="L124">                        rowCount++;</span>
+<span class="nc bnc" id="L150" title="All 2 branches missed.">                    if (colCount &gt; 36) {</span>
+<span class="nc" id="L151">                        colCount = 0;</span>
+<span class="nc" id="L152">                        rowCount++;</span>
                     }
 
-<span class="nc bnc" id="L127" title="All 2 branches missed.">                    if (tile == 'W') {</span>
-<span class="nc" id="L128">                        float x = colCount * 20;</span>
-<span class="nc" id="L129">                        float y = rowCount * 20;</span>
+<span class="nc bnc" id="L155" title="All 2 branches missed.">                    if (tile == 'W') {</span>
+<span class="nc" id="L156">                        float x = colCount * 20;</span>
+<span class="nc" id="L157">                        float y = rowCount * 20;</span>
 
-<span class="nc" id="L131">                        this.player = new Player(this, colCount * 20, rowCount * 20, numLives);</span>
+<span class="nc" id="L159">                        this.player = new Player(this, colCount * 20, rowCount * 20, numLives, fireballCooldown);</span>
                         // this.player.moveTo(this, colCount * 20, rowCount * 20);
-<span class="nc bnc" id="L133" title="All 2 branches missed.">                    } else if (tile == 'G') {</span>
-<span class="nc" id="L134">                        Gremlin gremlin = new Gremlin(this);</span>
+<span class="nc bnc" id="L161" title="All 2 branches missed.">                    } else if (tile == 'G') {</span>
+<span class="nc" id="L162">                        Gremlin gremlin = new Gremlin(this);</span>
 
-<span class="nc" id="L136">                        gremlin.posX = colCount * 20;</span>
-<span class="nc" id="L137">                        gremlin.posY = rowCount * 20;</span>
+<span class="nc" id="L164">                        gremlin.posX = colCount * 20;</span>
+<span class="nc" id="L165">                        gremlin.posY = rowCount * 20;</span>
 
-<span class="nc" id="L139">                        gremlin.moveTo(this, colCount * 20, rowCount * 20);</span>
+<span class="nc" id="L167">                        gremlin.moveTo(this, colCount * 20, rowCount * 20);</span>
             
-<span class="nc" id="L141">                        boolean[] collidingWalls = Engine.checkWallCollisions(gremlin, activeStoneWalls, activeBrickWalls);</span>
-<span class="nc" id="L142">                        int newGremlinHeading = (int)Math.floor(Math.random() * (3 + 1));</span>
-<span class="nc bnc" id="L143" title="All 2 branches missed.">                        while (collidingWalls[newGremlinHeading] == true) {</span>
-<span class="nc" id="L144">                            newGremlinHeading = (int)Math.floor(Math.random() * (3 + 1)); </span>
+<span class="nc" id="L169">                        boolean[] collidingWalls = Engine.checkWallCollisions(gremlin, activeStoneWalls, activeBrickWalls, icewall);</span>
+<span class="nc" id="L170">                        int newGremlinHeading = (int)Math.floor(Math.random() * (3 + 1));</span>
+<span class="nc bnc" id="L171" title="All 2 branches missed.">                        while (collidingWalls[newGremlinHeading] == true) {</span>
+<span class="nc" id="L172">                            newGremlinHeading = (int)Math.floor(Math.random() * (3 + 1)); </span>
                         }
                         
-<span class="nc" id="L147">                        gremlin.changeHeading(newGremlinHeading);</span>
+<span class="nc" id="L175">                        gremlin.changeHeading(newGremlinHeading);</span>
 
-<span class="nc" id="L149">                        activeGremlins.add(gremlin);</span>
+<span class="nc" id="L177">                        activeGremlins.add(gremlin);</span>
                     }
 
-<span class="nc" id="L152">                    map[rowCount][colCount] = tile;</span>
-<span class="nc" id="L153">                    tileRowCount++;</span>
-<span class="nc" id="L154">                    colCount++; </span>
-<span class="nc" id="L155">                }</span>
+<span class="nc" id="L180">                    map[rowCount][colCount] = tile;</span>
+<span class="nc" id="L181">                    tileRowCount++;</span>
+<span class="nc" id="L182">                    colCount++; </span>
+<span class="nc" id="L183">                }</span>
 
-<span class="nc" id="L157">            }</span>
+<span class="nc" id="L185">            }</span>
 
-<span class="nc" id="L159">            levelScanner.close();</span>
-<span class="nc" id="L160">        } catch (FileNotFoundException e) {</span>
-<span class="nc" id="L161">            System.out.printf(&quot;%s doesn't exist\n&quot;, levelFileName);</span>
-<span class="nc" id="L162">        }</span>
-<span class="nc" id="L163">    }</span>
+<span class="nc" id="L187">            levelScanner.close();</span>
+<span class="nc" id="L188">        } catch (FileNotFoundException e) {</span>
+<span class="nc" id="L189">            System.out.printf(&quot;%s doesn't exist\n&quot;, levelFileName);</span>
+<span class="nc" id="L190">        }</span>
+<span class="nc" id="L191">    }</span>
 
     public void loadNextLevel() {
-<span class="nc bnc" id="L166" title="All 2 branches missed.">        if (this.currentLevel == this.numLevels) {</span>
-<span class="nc" id="L167">            this.gameActiveState = 1;</span>
+<span class="nc bnc" id="L194" title="All 2 branches missed.">        if (this.currentLevel == this.numLevels) {</span>
+<span class="nc" id="L195">            this.gameActiveState = 1;</span>
         } else {
-<span class="nc" id="L169">            this.currentLevel += 1;</span>
-<span class="nc" id="L170">            System.out.println(this.currentLevel);</span>
-<span class="nc" id="L171">            initializeLevel(this.currentLevel, this.player.health.numLives);</span>
-<span class="nc" id="L172">            drawMap();     </span>
+<span class="nc" id="L197">            this.currentLevel += 1;</span>
+<span class="nc" id="L198">            System.out.println(this.currentLevel);</span>
+<span class="nc" id="L199">            initializeLevel(this.currentLevel, this.player.health.numLives);</span>
+<span class="nc" id="L200">            drawMap();     </span>
         }
-<span class="nc" id="L174">    }</span>
+<span class="nc" id="L202">    }</span>
     /**
      * Receive key pressed signal from the keyboard.
     */
     public void keyPressed(){
-<span class="nc bnc" id="L179" title="All 2 branches missed.">        if (this.keyCode == 37) {</span>
-<span class="nc" id="L180">            this.player.moveLeft(this);</span>
+<span class="nc bnc" id="L207" title="All 4 branches missed.">        if ((validMoveKeyPressed == false) &amp;&amp; (boundsCheckInProgress == false)) {</span>
+<span class="nc bnc" id="L208" title="All 2 branches missed.">            if (this.keyCode == 37) {</span>
+<span class="nc" id="L209">                validMoveKeyPressed = true;</span>
+<span class="nc" id="L210">                this.player.moveLeft(this);</span>
+<span class="nc bnc" id="L211" title="All 2 branches missed.">            } else if (this.keyCode == 38) {</span>
+<span class="nc" id="L212">                validMoveKeyPressed = true;</span>
+<span class="nc" id="L213">                this.player.moveUp(this);</span>
+<span class="nc bnc" id="L214" title="All 2 branches missed.">            } else if (this.keyCode == 39) {</span>
+<span class="nc" id="L215">                validMoveKeyPressed = true;</span>
+<span class="nc" id="L216">                this.player.moveRight(this);</span>
+<span class="nc bnc" id="L217" title="All 2 branches missed.">            } else if (this.keyCode == 40) {</span>
+<span class="nc" id="L218">                validMoveKeyPressed = true;</span>
+<span class="nc" id="L219">                this.player.moveDown(this);</span>
+            }      
         }
 
-<span class="nc bnc" id="L183" title="All 2 branches missed.">        if (this.keyCode == 38) {</span>
-<span class="nc" id="L184">            this.player.moveUp(this);</span>
-        } 
-
-<span class="nc bnc" id="L187" title="All 2 branches missed.">        if (this.keyCode == 39) {</span>
-<span class="nc" id="L188">            this.player.moveRight(this);</span>
+<span class="nc bnc" id="L223" title="All 2 branches missed.">        if (this.keyCode == 32) {</span>
+<span class="nc" id="L224">            activeFireballs = Engine.attemptFireballShoot(this, player, activeFireballs);</span>
         }
-
-<span class="nc bnc" id="L191" title="All 2 branches missed.">        if (this.keyCode == 40) {</span>
-<span class="nc" id="L192">            this.player.moveDown(this);</span>
-        } 
-
-<span class="nc bnc" id="L195" title="All 2 branches missed.">        if (this.keyCode == 32) {</span>
-<span class="nc bnc" id="L196" title="All 2 branches missed.">            if (this.player.directionFacing.equals(&quot;Right&quot;)) {</span>
-<span class="nc" id="L197">                Fireball newFireball = new Fireball(this, this.player.posX, this.player.posY, 4, 0, 1);</span>
-<span class="nc" id="L198">                activeFireballs.add(newFireball);</span>
-<span class="nc bnc" id="L199" title="All 2 branches missed.">            } else if (this.player.directionFacing.equals(&quot;Left&quot;)) {</span>
-<span class="nc" id="L200">                Fireball newFireball = new Fireball(this, this.player.posX, this.player.posY, -4, 0, 0);</span>
-<span class="nc" id="L201">                activeFireballs.add(newFireball);</span>
-<span class="nc bnc" id="L202" title="All 2 branches missed.">            } else if (this.player.directionFacing.equals(&quot;Up&quot;)) {</span>
-<span class="nc" id="L203">                Fireball newFireball = new Fireball(this, this.player.posX, this.player.posY, 0, -4, 2);</span>
-<span class="nc" id="L204">                activeFireballs.add(newFireball);</span>
-<span class="nc" id="L205">            } else {</span>
-<span class="nc" id="L206">                Fireball newFireball = new Fireball(this, this.player.posX, this.player.posY, 0, 4, 3);</span>
-<span class="nc" id="L207">                activeFireballs.add(newFireball);</span>
-            }
-        }
-<span class="nc" id="L210">    }</span>
+<span class="nc" id="L226">    }</span>
     
     /**
      * Receive key released signal from the keyboard.
     */
     public void keyReleased(){
-<span class="nc" id="L216">        this.player.velocityX = 0;</span>
-<span class="nc" id="L217">        this.player.velocityY = 0;</span>
-<span class="nc" id="L218">    }</span>
+<span class="nc bnc" id="L232" title="All 2 branches missed.">        if (this.keyCode == 37) {</span>
+<span class="nc" id="L233">            System.out.println(&quot;left release&quot;);</span>
+<span class="nc" id="L234">            boundsCheckInProgress = true;</span>
+<span class="nc" id="L235">            validMoveKeyPressed = false;</span>
+        }
+
+<span class="nc bnc" id="L238" title="All 2 branches missed.">        if (this.keyCode == 38) {</span>
+<span class="nc" id="L239">            boundsCheckInProgress = true;</span>
+<span class="nc" id="L240">            validMoveKeyPressed = false;</span>
+        } 
+
+<span class="nc bnc" id="L243" title="All 2 branches missed.">        if (this.keyCode == 39) {</span>
+<span class="nc" id="L244">            boundsCheckInProgress = true;</span>
+<span class="nc" id="L245">            validMoveKeyPressed = false;</span>
+        }
+
+<span class="nc bnc" id="L248" title="All 2 branches missed.">        if (this.keyCode == 40) {</span>
+<span class="nc" id="L249">            boundsCheckInProgress = true;</span>
+<span class="nc" id="L250">            validMoveKeyPressed = false;</span>
+        } 
+<span class="nc" id="L252">    }</span>
 
     public void drawMap() {
-<span class="nc" id="L221">        int rowCount = 0;</span>
+<span class="nc" id="L255">        int rowCount = 0;</span>
 
-<span class="nc bnc" id="L223" title="All 2 branches missed.">        while(rowCount &lt; map.length) {</span>
-<span class="nc" id="L224">            int colCount = 0;</span>
-<span class="nc bnc" id="L225" title="All 2 branches missed.">            while (colCount &lt; map[1].length) {</span>
+<span class="nc bnc" id="L257" title="All 2 branches missed.">        while(rowCount &lt; map.length) {</span>
+<span class="nc" id="L258">            int colCount = 0;</span>
+<span class="nc bnc" id="L259" title="All 2 branches missed.">            while (colCount &lt; map[1].length) {</span>
                
-<span class="nc" id="L227">                char brick = 'B';</span>
-<span class="nc" id="L228">                char stone = 'X';</span>
-<span class="nc" id="L229">                char player = 'W';</span>
+<span class="nc" id="L261">                char brick = 'B';</span>
+<span class="nc" id="L262">                char stone = 'X';</span>
+<span class="nc" id="L263">                char player = 'W';</span>
 
 
-<span class="nc bnc" id="L232" title="All 2 branches missed.">                if (map[rowCount][colCount] == brick) {</span>
-<span class="nc" id="L233">                    BrickWall brickwall = new BrickWall(this, colCount*20, rowCount*20);</span>
-<span class="nc" id="L234">                    activeWalls.add(brickwall);</span>
-<span class="nc" id="L235">                    activeBrickWalls.add(brickwall);</span>
+<span class="nc bnc" id="L266" title="All 2 branches missed.">                if (map[rowCount][colCount] == brick) {</span>
+<span class="nc" id="L267">                    BrickWall brickwall = new BrickWall(this, colCount*20, rowCount*20);</span>
+<span class="nc" id="L268">                    activeWalls.add(brickwall);</span>
+<span class="nc" id="L269">                    activeBrickWalls.add(brickwall);</span>
                 }
 
-<span class="nc bnc" id="L238" title="All 2 branches missed.">                if (map[rowCount][colCount] == stone) {</span>
-<span class="nc" id="L239">                    StoneWall stonewall = new StoneWall(this, colCount*20, rowCount*20);</span>
-<span class="nc" id="L240">                    activeStoneWalls.add(stonewall);</span>
-<span class="nc" id="L241">                    activeWalls.add(stonewall);</span>
+<span class="nc bnc" id="L272" title="All 2 branches missed.">                if (map[rowCount][colCount] == stone) {</span>
+<span class="nc" id="L273">                    StoneWall stonewall = new StoneWall(this, colCount*20, rowCount*20);</span>
+<span class="nc" id="L274">                    activeStoneWalls.add(stonewall);</span>
+<span class="nc" id="L275">                    activeWalls.add(stonewall);</span>
                 }
 
-<span class="nc bnc" id="L244" title="All 2 branches missed.">                if (map[rowCount][colCount] == ' ') {</span>
-<span class="nc" id="L245">                    Ground groundtile = new Ground(this, colCount * 20, rowCount * 20);</span>
-<span class="nc" id="L246">                    groundTiles.add(groundtile);</span>
+<span class="nc bnc" id="L278" title="All 2 branches missed.">                if (map[rowCount][colCount] == ' ') {</span>
+<span class="nc" id="L279">                    Ground groundtile = new Ground(this, colCount * 20, rowCount * 20);</span>
+<span class="nc" id="L280">                    groundTiles.add(groundtile);</span>
                 }
 
-<span class="nc bnc" id="L249" title="All 2 branches missed.">                if (map[rowCount][colCount] == 'E') {</span>
-<span class="nc" id="L250">                    escapeDoor = new EscapeDoor(this, colCount * 20, rowCount * 20);</span>
+<span class="nc bnc" id="L283" title="All 2 branches missed.">                if (map[rowCount][colCount] == 'E') {</span>
+<span class="nc" id="L284">                    escapeDoor = new EscapeDoor(this, colCount * 20, rowCount * 20);</span>
                 }
 
-<span class="nc" id="L253">                colCount++;</span>
-<span class="nc" id="L254">            }</span>
+<span class="nc" id="L287">                colCount++;</span>
+<span class="nc" id="L288">            }</span>
 
-<span class="nc" id="L256">            rowCount++;</span>
-<span class="nc" id="L257">        }</span>
-<span class="nc" id="L258">    }</span>
+<span class="nc" id="L290">            rowCount++;</span>
+<span class="nc" id="L291">        }</span>
+<span class="nc" id="L292">    }</span>
 
     /**
      * Draw all elements in the game by current frame. 
 	 */
     public void draw() {
-<span class="nc" id="L264">        background(169, 149, 123);</span>
+<span class="nc" id="L298">        background(169, 149, 123);</span>
 
-<span class="nc bnc" id="L266" title="All 2 branches missed.">        if (this.gameActiveState == 0) {</span>
+<span class="nc bnc" id="L300" title="All 2 branches missed.">        if (this.gameActiveState == 0) {</span>
 
-<span class="nc bnc" id="L268" title="All 2 branches missed.">            if (this.player.health.numLives == 0) {</span>
-<span class="nc" id="L269">                this.gameActiveState = 2;</span>
+<span class="nc" id="L302">            Engine.updateFireballProgress(this, player);</span>
+
+<span class="nc" id="L304">            isGremlinsFrozen = icewall.getInEffect();</span>
+
+<span class="nc bnc" id="L306" title="All 2 branches missed.">            if (fireballProgress.isActive == true) {</span>
+<span class="nc" id="L307">                System.out.println(&quot;Active&quot;);</span>
+<span class="nc" id="L308">                fireballProgress.draw();  </span>
             }
 
-<span class="nc" id="L272">            Engine.handleLifePowerUpSpawn(player, lifePowerup, groundTiles);</span>
-<span class="nc" id="L273">            Engine.checkPlayerGainsLife(player, lifePowerup);</span>
-<span class="nc bnc" id="L274" title="All 2 branches missed.">            if (lifePowerup.isActive == true) {</span>
-<span class="nc" id="L275">                lifePowerup.draw();</span>
+<span class="nc bnc" id="L311" title="All 2 branches missed.">            if (icewallProgress.isActive == true) {</span>
+<span class="nc" id="L312">                icewallProgress.draw();  </span>
             }
 
-<span class="nc" id="L278">            boolean isAtExit = Engine.checkPlayerAtExit(player, escapeDoor);</span>
-<span class="nc" id="L279">            activeSlimes = Engine.monitorGremlinSpawns(player, activeGremlins, groundTiles, activeSlimes);</span>
-<span class="nc bnc" id="L280" title="All 2 branches missed.">            if (isAtExit == true) {</span>
-<span class="nc" id="L281">                loadNextLevel();</span>
+<span class="nc bnc" id="L315" title="All 2 branches missed.">            if (this.player.health.numLives == 0) {</span>
+<span class="nc" id="L316">                this.gameActiveState = 2;</span>
             }
 
-<span class="nc" id="L284">            Iterator&lt;BrickWall&gt; brickwallItr = this.activeBrickWalls.iterator();</span>
+<span class="nc" id="L319">            Engine.handleLifePowerUpSpawn(player, lifePowerup, groundTiles);</span>
+<span class="nc" id="L320">            Engine.checkPlayerGainsLife(player, lifePowerup);</span>
 
-<span class="nc bnc" id="L286" title="All 2 branches missed.">            while (brickwallItr.hasNext()) {</span>
-<span class="nc" id="L287">                BrickWall brickwall = brickwallItr.next();</span>
+<span class="nc" id="L322">            Engine.handleIceWallSpawn(player, icewall, groundTiles);</span>
+            // Engine.checkPlayerShotWall(player, lifePowerup);
 
-<span class="nc" id="L289">                boolean isDestroyed = brickwall.tick();</span>
+<span class="nc" id="L325">            Object[] updatedFireballSlimeData = Engine.checkFireballSlimeCollisions(activeFireballs, activeSlimes);</span>
+            
+<span class="nc" id="L327">            activeFireballs = (ArrayList&lt;Fireball&gt;)updatedFireballSlimeData[0];</span>
+<span class="nc" id="L328">            activeSlimes = (ArrayList&lt;Slime&gt;)updatedFireballSlimeData[1];</span>
+
+<span class="nc" id="L330">            icewall.tick();</span>
+
+<span class="nc bnc" id="L332" title="All 2 branches missed.">            if (icewall.isActive == true) {</span>
+<span class="nc" id="L333">                icewall.draw();</span>
+            }
+
+<span class="nc bnc" id="L336" title="All 2 branches missed.">            if (lifePowerup.isActive == true) {</span>
+<span class="nc" id="L337">                lifePowerup.draw();</span>
+            }
+
+<span class="nc" id="L340">            boolean isAtExit = Engine.checkPlayerAtExit(player, escapeDoor);</span>
+<span class="nc" id="L341">            activeSlimes = Engine.monitorGremlinSpawns(player, activeGremlins, groundTiles, activeSlimes);</span>
+<span class="nc bnc" id="L342" title="All 2 branches missed.">            if (isAtExit == true) {</span>
+<span class="nc" id="L343">                loadNextLevel();</span>
+            }
+
+<span class="nc" id="L346">            Iterator&lt;BrickWall&gt; brickwallItr = this.activeBrickWalls.iterator();</span>
+
+<span class="nc bnc" id="L348" title="All 2 branches missed.">            while (brickwallItr.hasNext()) {</span>
+<span class="nc" id="L349">                BrickWall brickwall = brickwallItr.next();</span>
+
+<span class="nc" id="L351">                boolean isDestroyed = brickwall.tick();</span>
                     
-<span class="nc bnc" id="L291" title="All 2 branches missed.">                if (isDestroyed == true) {</span>
+<span class="nc bnc" id="L353" title="All 2 branches missed.">                if (isDestroyed == true) {</span>
 
-<span class="nc" id="L293">                    brickwallItr.remove();</span>
+<span class="nc" id="L355">                    brickwallItr.remove();</span>
                 }
   
-<span class="nc" id="L296">            }</span>
+<span class="nc" id="L358">            }</span>
 
-<span class="nc" id="L298">            escapeDoor.draw();</span>
-<span class="nc" id="L299">            boolean[] playerWallCollisions = Engine.checkWallCollisions(player, activeStoneWalls, activeBrickWalls);</span>
+<span class="nc" id="L360">            escapeDoor.draw();</span>
+<span class="nc" id="L361">            boolean[] playerWallCollisions = Engine.checkWallCollisions(player, activeStoneWalls, activeBrickWalls, icewall);</span>
               
-<span class="nc" id="L301">            Object[] playerGremlinCollisionInfo = Engine.checkPlayerGremlinCollision(player, activeGremlins);</span>
-<span class="nc" id="L302">            boolean isPlayerHit = (boolean)playerGremlinCollisionInfo[1];</span>
+<span class="nc" id="L363">            Object[] playerGremlinCollisionInfo = Engine.checkPlayerGremlinCollision(player, activeGremlins);</span>
+<span class="nc" id="L364">            boolean isPlayerHit = (boolean)playerGremlinCollisionInfo[1];</span>
     
-<span class="nc" id="L304">            activeGremlins = (ArrayList&lt;Gremlin&gt;)playerGremlinCollisionInfo[0];</span>
-    
-<span class="nc bnc" id="L306" title="All 4 branches missed.">            if ((this.player.directionFacing == &quot;Left&quot;) &amp;&amp; (playerWallCollisions[0] == false)) {</span>
-<span class="nc" id="L307">                this.player.move();</span>
-<span class="nc bnc" id="L308" title="All 4 branches missed.">            } else if ((this.player.directionFacing == &quot;Right&quot;) &amp;&amp; (playerWallCollisions[1] == false)) {</span>
-<span class="nc" id="L309">                this.player.move();</span>
-<span class="nc bnc" id="L310" title="All 4 branches missed.">            } else if ((this.player.directionFacing == &quot;Up&quot;) &amp;&amp; (playerWallCollisions[2] == false)) {</span>
-<span class="nc" id="L311">                this.player.move();</span>
-<span class="nc bnc" id="L312" title="All 4 branches missed.">            } else if ((this.player.directionFacing == &quot;Down&quot;) &amp;&amp; (playerWallCollisions[3] == false)) {</span>
-<span class="nc" id="L313">                this.player.move();</span>
-            }
-    
-<span class="nc" id="L316">            this.player.draw(this);</span>
-    
-<span class="nc" id="L318">            Iterator&lt;Fireball&gt; fireballItr = activeFireballs.iterator();</span>
+<span class="nc" id="L366">            activeGremlins = (ArrayList&lt;Gremlin&gt;)playerGremlinCollisionInfo[0];</span>
             
-<span class="nc bnc" id="L320" title="All 2 branches missed.">            while (fireballItr.hasNext()) {</span>
-<span class="nc" id="L321">                Fireball fireball = fireballItr.next();</span>
+<span class="nc" id="L368">            this.runner.run();</span>
+<span class="nc" id="L369">            this.player.draw(this);</span>
     
-<span class="nc" id="L323">                activeBrickWalls = Engine.renderBrickWalls(fireball, activeBrickWalls);</span>
-<span class="nc" id="L324">                Object[] fireballGremlinCollisionData = Engine.checkFireballGremlinCollision(fireball, activeGremlins);</span>
-<span class="nc" id="L325">                activeGremlins = (ArrayList&lt;Gremlin&gt;)fireballGremlinCollisionData[0];</span>
-<span class="nc" id="L326">                boolean isFireballDestroyed = (Engine.handleFireball(fireball, activeStoneWalls, activeBrickWalls));</span>
+<span class="nc bnc" id="L371" title="All 2 branches missed.">            for (Gremlin gremlin: activeGremlins) {</span>
+<span class="nc" id="L372">                boolean[] collidingWalls = Engine.checkWallCollisions(gremlin, activeStoneWalls, activeBrickWalls, icewall);</span>
+<span class="nc" id="L373">                int currentGremlinHeading = gremlin.headingDirection;</span>
+<span class="nc" id="L374">                ArrayList&lt;Integer&gt; possibleHeadings = new ArrayList&lt;Integer&gt;();</span>
+
+<span class="nc" id="L376">                int heading = 0;</span>
+<span class="nc bnc" id="L377" title="All 2 branches missed.">                while (heading &lt; collidingWalls.length) {</span>
+<span class="nc bnc" id="L378" title="All 2 branches missed.">                    if (collidingWalls[heading] == false) {</span>
+<span class="nc" id="L379">                        possibleHeadings.add(heading);</span>
+                    }
+
+<span class="nc" id="L382">                    heading += 1;</span>
+                }
                 
-<span class="nc bnc" id="L328" title="All 2 branches missed.">                if (isFireballDestroyed == false) {</span>
-<span class="nc" id="L329">                    fireball.move(this);    </span>
-                } else {
-<span class="nc" id="L331">                    fireballItr.remove();      </span>
-                }   
-<span class="nc" id="L333">            }</span>
-    
-<span class="nc bnc" id="L335" title="All 2 branches missed.">            for (Gremlin gremlin: activeGremlins) {</span>
-<span class="nc" id="L336">                boolean[] collidingWalls = Engine.checkWallCollisions(gremlin, activeStoneWalls, activeBrickWalls);</span>
-<span class="nc" id="L337">                int currentGremlinHeading = gremlin.headingDirection;</span>
-<span class="nc bnc" id="L338" title="All 2 branches missed.">                if (gremlin.isAlive == true) {</span>
-<span class="nc bnc" id="L339" title="All 2 branches missed.">                    if ((collidingWalls[currentGremlinHeading] == true)) {</span>
-<span class="nc" id="L340">                        int newGremlinHeading = (int)Math.floor(Math.random() * (3 + 1));</span>
-<span class="nc bnc" id="L341" title="All 2 branches missed.">                        while (collidingWalls[newGremlinHeading] == true) {</span>
-<span class="nc" id="L342">                            newGremlinHeading = (int)Math.floor(Math.random() * (3 + 1)); </span>
+<span class="nc bnc" id="L385" title="All 2 branches missed.">                if (gremlin.isAlive == true) {</span>
+<span class="nc bnc" id="L386" title="All 2 branches missed.">                    if ((collidingWalls[currentGremlinHeading] == true)) {</span>
+<span class="nc" id="L387">                        int newGremlinHeading = (int)Math.floor(Math.random() * (3 + 1));</span>
+
+<span class="nc bnc" id="L389" title="All 2 branches missed.">                        if (possibleHeadings.size() &gt; 1) {</span>
+<span class="nc" id="L390">                            System.out.println(possibleHeadings);</span>
+<span class="nc" id="L391">                            int oppositeHeading = Engine.getOppositeHeading(currentGremlinHeading);</span>
+<span class="nc" id="L392">                            System.out.println(oppositeHeading);</span>
+<span class="nc" id="L393">                            newGremlinHeading = possibleHeadings.get((int)Math.floor(Math.random() * possibleHeadings.size()));</span>
+
+<span class="nc bnc" id="L395" title="All 2 branches missed.">                            while ((newGremlinHeading == oppositeHeading)) {</span>
+<span class="nc" id="L396">                                newGremlinHeading = possibleHeadings.get((int)Math.floor(Math.random() * possibleHeadings.size()));</span>
+                            } 
                         }
         
-<span class="nc" id="L345">                        gremlin.changeHeading(newGremlinHeading);</span>
-<span class="nc" id="L346">                        gremlin.move();</span>
-<span class="nc" id="L347">                        gremlin.draw(this);</span>
-<span class="nc" id="L348">                    } else {</span>
-<span class="nc" id="L349">                        gremlin.move();</span>
-<span class="nc" id="L350">                        gremlin.draw(this);</span>
-                    }  
-                }
-<span class="nc" id="L353">            }</span>
-    
-<span class="nc" id="L355">            Iterator&lt;Slime&gt; slimeItr = activeSlimes.iterator();</span>
-    
-            
-<span class="nc bnc" id="L358" title="All 2 branches missed.">            while (slimeItr.hasNext()) {</span>
-<span class="nc" id="L359">                Slime slime = slimeItr.next();</span>
-    
-<span class="nc" id="L361">                boolean isSlimeDestroyed = (Engine.handleSlime(slime, activeStoneWalls, activeBrickWalls));</span>
-<span class="nc" id="L362">                Object[] playerSlimeCollisionData = Engine.checkSlimePlayerCollision(this.player, activeSlimes);</span>
-<span class="nc" id="L363">                activeSlimes = (ArrayList&lt;Slime&gt;)playerSlimeCollisionData[0];</span>
+<span class="nc" id="L400">                        gremlin.changeHeading(newGremlinHeading);</span>
+                    } 
                 
-<span class="nc bnc" id="L365" title="All 2 branches missed.">                if (isSlimeDestroyed == false) {</span>
-<span class="nc" id="L366">                    slime.move();  </span>
-<span class="nc" id="L367">                    slime.draw(this);  </span>
-                } else {
-<span class="nc" id="L369">                    slimeItr.remove();      </span>
-                }   
-<span class="nc" id="L371">            }</span>
+<span class="nc bnc" id="L403" title="All 2 branches missed.">                    if (isGremlinsFrozen == false) {</span>
+<span class="nc" id="L404">                        gremlin.move();</span>
+                    }
 
-<span class="nc bnc" id="L373" title="All 2 branches missed.">            for (StoneWall stonewall: activeStoneWalls) {</span>
-<span class="nc" id="L374">                stonewall.draw(this);</span>
-<span class="nc" id="L375">            }</span>
+<span class="nc" id="L407">                    gremlin.draw(this);</span>
+                }
+<span class="nc" id="L409">            }</span>
+    
+<span class="nc" id="L411">            Iterator&lt;Slime&gt; slimeItr = activeSlimes.iterator();</span>
+    
+            
+<span class="nc bnc" id="L414" title="All 2 branches missed.">            while (slimeItr.hasNext()) {</span>
+<span class="nc" id="L415">                Slime slime = slimeItr.next();</span>
+    
+<span class="nc" id="L417">                boolean isSlimeDestroyed = (Engine.handleSlime(slime, activeStoneWalls, activeBrickWalls));</span>
+<span class="nc" id="L418">                Object[] playerSlimeCollisionData = Engine.checkSlimePlayerCollision(this.player, activeSlimes);</span>
+<span class="nc" id="L419">                activeSlimes = (ArrayList&lt;Slime&gt;)playerSlimeCollisionData[0];</span>
+                
+<span class="nc bnc" id="L421" title="All 2 branches missed.">                if (isSlimeDestroyed == false) {</span>
+<span class="nc" id="L422">                    slime.move();  </span>
+<span class="nc" id="L423">                    slime.draw(this);  </span>
+                } else {
+<span class="nc" id="L425">                    slimeItr.remove();      </span>
+                }   
+<span class="nc" id="L427">            }</span>
+
+<span class="nc bnc" id="L429" title="All 2 branches missed.">            for (StoneWall stonewall: activeStoneWalls) {</span>
+<span class="nc" id="L430">                stonewall.draw(this);</span>
+<span class="nc" id="L431">            }</span>
 
             
-<span class="nc bnc" id="L378" title="All 2 branches missed.">            for (BrickWall brickwall: activeBrickWalls) {</span>
-<span class="nc" id="L379">                brickwall.draw(this);</span>
-<span class="nc" id="L380">            }</span>
+<span class="nc bnc" id="L434" title="All 2 branches missed.">            for (BrickWall brickwall: activeBrickWalls) {</span>
+<span class="nc" id="L435">                brickwall.draw(this);</span>
+<span class="nc" id="L436">            }</span>
 
-<span class="nc" id="L382">            this.player.health.bar();</span>
-<span class="nc" id="L383">            textSize(20);</span>
-<span class="nc" id="L384">            text(&quot;Lives: &quot;, 20, 695); </span>
+<span class="nc bnc" id="L438" title="All 2 branches missed.">            for (Fireball fireball: activeFireballs) {</span>
+<span class="nc" id="L439">                fireball.draw();</span>
+<span class="nc" id="L440">            }</span>
+
+<span class="nc" id="L442">            Engine.updateIceWallProgress(this, icewall);</span>
+
+<span class="nc" id="L444">            this.player.health.bar();</span>
+<span class="nc" id="L445">            textSize(20);</span>
+<span class="nc" id="L446">            text(&quot;Lives: &quot;, 20, 695); </span>
     
-<span class="nc" id="L386">            String levelDisplay = String.format(&quot;Level: %d/%d&quot;, this.currentLevel, this.numLevels);</span>
-<span class="nc" id="L387">            text(levelDisplay, 300, 695); </span>
+<span class="nc" id="L448">            String levelDisplay = String.format(&quot;Level: %d/%d&quot;, this.currentLevel, this.numLevels);</span>
+<span class="nc" id="L449">            text(levelDisplay, 300, 695); </span>
 
-<span class="nc bnc" id="L389" title="All 2 branches missed.">        } else if (this.gameActiveState == 1) {</span>
-<span class="nc" id="L390">            textSize(30);</span>
-<span class="nc" id="L391">            text(&quot;You Won!!!&quot;, 280, 360);     </span>
+<span class="nc bnc" id="L451" title="All 2 branches missed.">        } else if (this.gameActiveState == 1) {</span>
+<span class="nc" id="L452">            textSize(30);</span>
+<span class="nc" id="L453">            text(&quot;You Won!!!&quot;, 280, 360);     </span>
         } else {
-<span class="nc" id="L393">            textSize(30);</span>
-<span class="nc" id="L394">            text(&quot;Game Over!!!&quot;, 280, 360);    </span>
+<span class="nc" id="L455">            textSize(30);</span>
+<span class="nc" id="L456">            text(&quot;Game Over!!!&quot;, 280, 360);    </span>
         }
-<span class="nc" id="L396">    }</span>
+<span class="nc" id="L458">    }</span>
 
     public static void main(String[] args) {
-<span class="nc" id="L399">        PApplet.main(&quot;gremlins.App&quot;);</span>
-<span class="nc" id="L400">    }</span>
+<span class="nc" id="L461">        PApplet.main(&quot;gremlins.App&quot;);</span>
+<span class="nc" id="L462">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

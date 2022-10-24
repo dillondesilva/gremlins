@@ -3,34 +3,30 @@
 import processing.core.PApplet;
 import processing.core.PImage;
 
-public class Fireball extends Collider {
+public class Fireball extends Projectile {
     public PImage image;
 
     public float velocityX;
     public float velocityY;
 
-    public int headingDirection;
-
     public Fireball(PApplet app, float startX, float startY, float xVelocity, float yVelocity, int heading) {
-<span class="fc" id="L15">        super(app, startX, startY);</span>
+<span class="fc" id="L13">        super(app, startX, startY, &quot;fireball.png&quot;, heading);</span>
+
+<span class="fc" id="L15">        this.velocityX = xVelocity;</span>
+<span class="fc" id="L16">        this.velocityY = yVelocity;</span>
 
         try {
-<span class="nc" id="L18">            this.image = app.loadImage(app.getClass().getResource(&quot;fireball.png&quot;).getPath().replace(&quot;%20&quot;, &quot;&quot;));</span>
-<span class="fc" id="L19">        } catch (Exception e) {</span>
-            // Do nothing we are in testing;
-<span class="nc" id="L21">        }</span>
-<span class="fc" id="L22">        this.velocityX = xVelocity;</span>
-<span class="fc" id="L23">        this.velocityY = yVelocity;</span>
+<span class="nc" id="L19">            this.image = app.loadImage(app.getClass().getResource(&quot;fireball.png&quot;).getPath().replace(&quot;%20&quot;, &quot;&quot;));</span>
+<span class="fc" id="L20">        } catch (Exception e) {</span>
+            // Do nothing as we are in testing;
+<span class="nc" id="L22">        }</span>
+<span class="fc" id="L23">    }</span>
 
-<span class="fc" id="L25">        this.headingDirection = heading;</span>
-<span class="fc" id="L26">    }</span>
+    public void move() {
+<span class="nc" id="L26">        this.posX = this.posX + this.velocityX;</span>
+<span class="nc" id="L27">        this.posY = this.posY + this.velocityY;</span>
 
-    public void move(PApplet app) {
-<span class="nc" id="L29">        this.posX = this.posX + this.velocityX;</span>
-<span class="nc" id="L30">        this.posY = this.posY + this.velocityY;</span>
-
-<span class="nc" id="L32">        this.bounds.setBounds(this.posX, this.posY);</span>
-<span class="nc" id="L33">        app.image(this.image, this.posX, this.posY);</span>
-<span class="nc" id="L34">    }</span>
+<span class="nc" id="L29">        this.bounds.setBounds(this.posX, this.posY);</span>
+<span class="nc" id="L30">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

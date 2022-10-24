@@ -25,7 +25,7 @@ public class CollisionDetector {
 
     public static boolean isRightColliding(Collider colliderA, Collider colliderB) {
         boolean isInYRange = isInYBounds(colliderA, colliderB);
-        boolean isRightBoundColliding = (colliderA.bounds.right + 2 > colliderB.bounds.left) & (colliderA.bounds.right + 2 < colliderB.bounds.right);
+        boolean isRightBoundColliding = (colliderA.bounds.right + 1 > colliderB.bounds.left) & (colliderA.bounds.right + 1 < colliderB.bounds.right);
         if (isRightBoundColliding == true) {
             if (isInYRange == true) {
                 return true; 
@@ -37,7 +37,7 @@ public class CollisionDetector {
 
     public static boolean isLeftColliding(Collider colliderA, Collider colliderB) {
         boolean isInYRange = isInYBounds(colliderA, colliderB);
-        boolean isLeftBoundColliding = (colliderA.bounds.left - 2 > colliderB.bounds.left) & (colliderA.bounds.left - 2 < colliderB.bounds.right);
+        boolean isLeftBoundColliding = (colliderA.bounds.left - 1 > colliderB.bounds.left) & (colliderA.bounds.left - 1 < colliderB.bounds.right);
 
         if (isLeftBoundColliding == true) {
             // System.out.printf("LeftBoundColliding %b\n", isLeftBoundColliding);
@@ -54,7 +54,7 @@ public class CollisionDetector {
 
     public static boolean isTopColliding(Collider colliderA, Collider colliderB) {
         boolean isInXRange = isInXBounds(colliderA, colliderB);
-        boolean isTopBoundColliding = (colliderA.bounds.top - 2 > colliderB.bounds.top) && (colliderA.bounds.top - 2 < colliderB.bounds.bottom);
+        boolean isTopBoundColliding = (colliderA.bounds.top - 1 > colliderB.bounds.top) && (colliderA.bounds.top - 1 < colliderB.bounds.bottom);
 
         if (isInXRange == true) {
             // System.out.printf("InXRange: %b\n", isInXRange);
@@ -70,7 +70,7 @@ public class CollisionDetector {
 
     public static boolean isBottomColliding(Collider colliderA, Collider colliderB) {
         boolean isInXRange = isInXBounds(colliderA, colliderB);
-        boolean isBottomBoundColliding = (colliderA.bounds.bottom + 2 > colliderB.bounds.top) & (colliderA.bounds.bottom + 2 < colliderB.bounds.bottom);
+        boolean isBottomBoundColliding = (colliderA.bounds.bottom + 1 > colliderB.bounds.top) & (colliderA.bounds.bottom + 1 < colliderB.bounds.bottom);
         if (isBottomBoundColliding == true) {
             if (isInXRange == true) {
                 return true; 

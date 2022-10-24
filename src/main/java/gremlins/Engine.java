@@ -1,7 +1,11 @@
 package gremlins;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Iterator;
+
+import processing.core.PApplet;
 
 /**
  * Engine is a class containing all the functionality to 
@@ -9,10 +13,17 @@ import java.util.Iterator;
  * for the game
  */
 public class Engine {
-    public static boolean[] checkWallCollisions(Collider collider, ArrayList<StoneWall> stonewalls, ArrayList<BrickWall> brickwalls) {
+    public App context;
+
+    public Engine(App app) {
+        this.context = app;
+    }
+
+    public static boolean[] checkWallCollisions(Collider collider, ArrayList<StoneWall> stonewalls, ArrayList<BrickWall> brickwalls, IceWall icewall) {
         // Boolean array for each direction
         boolean[] isCollidingWithWall = new boolean[] {false, false, false, false};
 
+        // Iterate over alll the stonewalls and check for collisions
         for (Wall stonewall: stonewalls) {
             boolean isLeftColliding = CollisionDetector.isLeftColliding(collider, stonewall);
             boolean isRightColliding = CollisionDetector.isRightColliding(collider, stonewall);
@@ -36,6 +47,7 @@ public class Engine {
             }
         }
 
+        // Iterate over brickwalls and check for collisions
         for (Wall brickwall: brickwalls) {
             boolean isLeftColliding = CollisionDetector.isLeftColliding(collider, brickwall);
             boolean isRightColliding = CollisionDetector.isRightColliding(collider, brickwall);
@@ -58,11 +70,41 @@ public class Engine {
                 isCollidingWithWall[3] = true;
             }
         }
+
+        if (icewall.isActive == true) {
+            boolean isLeftColliding = CollisionDetector.isLeftColliding(collider, icewall);
+            boolean isRightColliding = CollisionDetector.isRightColliding(collider, icewall);
+            boolean isTopColliding = CollisionDetector.isTopColliding(collider, icewall);
+            boolean isBottomColliding = CollisionDetector.isBottomColliding(collider, icewall);
+
+            if (isLeftColliding == true) {
+                isCollidingWithWall[0] = true;
+            } 
+
+            if (isRightColliding == true) {
+                isCollidingWithWall[1] = true;
+            } 
+
+            if (isTopColliding == true) {
+                isCollidingWithWall[2] = true;
+            } 
+
+            if (isBottomColliding == true) {
+                isCollidingWithWall[3] = true;
+            }
+        }
         
 
         return isCollidingWithWall;
     }
 
+    /**
+     * Checks for fireball collisions with stone and brick walls
+     * @param fireball
+     * @param stonewalls
+     * @param brickwalls
+     * @return
+     */
     public static boolean handleFireball(Fireball fireball, ArrayList<StoneWall> stonewalls, ArrayList<BrickWall> brickwalls) {
         Iterator<BrickWall> brickWallItr =  brickwalls.iterator();
         boolean isFireballDestroyed = false;
@@ -88,6 +130,22 @@ public class Engine {
         }
 
         return isFireballDestroyed;
+    }
+
+    public static boolean checkIceWallActivated(Fireball fireball, IceWall icewall) {
+        Boolean[] isCollidingWithIceWall = CollisionDetector.checkCollisions(fireball, icewall);
+
+        if (icewall.getInEffect() == false) {
+            if (isCollidingWithIceWall[fireball.headingDirection] == true) {
+                icewall.brickDestroyInProgress = true;
+                icewall.inEffect = true;
+                icewall.lastInEffectTime = Instant.now();
+
+                return true;
+            }
+        }      
+        
+        return false;
     }
 
     public static boolean handleSlime(Slime slime, ArrayList<StoneWall> stonewalls, ArrayList<BrickWall> brickwalls) {
@@ -117,6 +175,13 @@ public class Engine {
         return isFireballDestroyed;
     }
 
+    /**
+     * Handles projectile collisions with walls (either stone or brick)
+     * @param projectile
+     * @param stonewalls
+     * @param brickwalls
+     * @return
+     */
     public static boolean handleProjectile(Projectile projectile, ArrayList<StoneWall> stonewalls, ArrayList<BrickWall> brickwalls) {
         Iterator<BrickWall> brickWallItr =  brickwalls.iterator();
         boolean isProjectileDestroyed = false;
@@ -142,6 +207,33 @@ public class Engine {
         }
 
         return isProjectileDestroyed;
+    }
+
+    public static Object[] checkFireballSlimeCollisions(ArrayList<Fireball> fireballs, ArrayList<Slime> slimes) {
+        Iterator<Fireball> fireballItr = fireballs.iterator();
+        Iterator<Slime> slimeItr = slimes.iterator();
+
+        while (fireballItr.hasNext()) {
+            Fireball fireball = fireballItr.next(); 
+            while (slimeItr.hasNext()) {
+                Slime slime = slimeItr.next();
+
+                boolean isColliding = checkProjectileOnProjectile(fireball, slime);
+  
+                if (isColliding == true) {
+                    fireballItr.remove();
+                    slimeItr.remove();
+                }
+            }
+        }
+
+        Object[] postCheckFireballSlimeData = new Object[] {fireballs, slimes};
+        return postCheckFireballSlimeData;
+    }
+
+    public static boolean checkProjectileOnProjectile(Projectile projectileA, Projectile projectileB) {
+        boolean isColliding = CollisionDetector.isColliding(projectileA, projectileB);
+        return isColliding;
     }
 
     public static ArrayList<BrickWall> renderBrickWalls(Fireball fireball, ArrayList<BrickWall> brickwalls) {
@@ -305,4 +397,92 @@ public class Engine {
             return 2;
         }
     }
+
+    public static boolean isShootAvailable(App context, Player player) {
+        Instant currentTime = Instant.now();
+
+        Duration timeSinceLastShot = Duration.between(player.lastFireTime, currentTime);
+         
+        if (timeSinceLastShot.toMillis() > player.fireballCooldown) {
+            context.fireballProgress.isActive = false;
+            player.lastFireTime = Instant.now();
+            
+            return true;
+        }
+
+        return false;
+    }
+
+    public static float getFireballProgress(Player player) {
+        Instant currentTime = Instant.now();
+        Duration timeSinceLastShot = Duration.between(player.lastFireTime, currentTime); 
+        
+        float progress = (float)(timeSinceLastShot.toMillis() / player.fireballCooldown);
+
+        return progress;
+    }
+
+    public static float getIceWallProgress(IceWall icewall) {
+
+        Instant currentTime = Instant.now();
+        Duration timeSinceLastInEffect = Duration.between(icewall.lastInEffectTime, currentTime); 
+
+
+        float progress = (float)(timeSinceLastInEffect.toMillis() / 3000.0);
+        
+        return progress;
+    }
+
+    public static ArrayList<Fireball> attemptFireballShoot(App app, Player player, ArrayList<Fireball> activeFireballs) {
+        if (isShootAvailable(app, player) == true) {
+            if (player.directionFacing.equals("Right")) {
+                Fireball newFireball = new Fireball(app, player.posX, player.posY, 4, 0, 1);
+                activeFireballs.add(newFireball);
+            } else if (player.directionFacing.equals("Left")) {
+                Fireball newFireball = new Fireball(app, player.posX, player.posY, -4, 0, 0);
+                activeFireballs.add(newFireball);
+            } else if (player.directionFacing.equals("Up")) {
+                Fireball newFireball = new Fireball(app, player.posX, player.posY, 0, -4, 2);
+                activeFireballs.add(newFireball);
+            } else {
+                Fireball newFireball = new Fireball(app, player.posX, player.posY, 0, 4, 3);
+                activeFireballs.add(newFireball);
+            }
+
+            app.fireballProgress.isActive = true;
+        }
+       
+        return activeFireballs;
+    }
+
+    /**
+     * Adjusts the player position when key is released till it falls neatly
+     * into a new tile spot
+     * @param player
+     * @return Boolean value about whether further adjustment is needed or not
+     */
+    public static boolean adjustPlayerPosition(Player player) {
+        if ((player.posX % 20 != 0) || (player.posY % 20 != 0)) {
+            player.move();
+            return true;
+        }
+
+        System.out.println(player.posX);
+        System.out.println(player.posY);
+
+        player.velocityX = 0;
+        player.velocityY = 0;
+
+        return false;
+    }
+
+    // public static boolean checkIceWallActivated(Fireball fireball, IceWall icewall) {
+    //     boolean isColliding = CollisionDetector.isColliding(fireball, icewall);
+
+    //     if ((icewall.isActive == true) && (isColliding == true)) {
+    //         return true;
+    //     }
+
+    //     return false;
+    // }
 }

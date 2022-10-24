@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="gremlins.TestApp" tests="2" skipped="0" failures="1" errors="0" timestamp="2022-10-22T07:46:42" hostname="Dillons-MacBook-Air.local" time="0.017">
+<testsuite name="gremlins.TestApp" tests="2" skipped="0" failures="1" errors="0" timestamp="2022-10-23T13:56:56" hostname="Dillons-MacBook-Air.local" time="0.014">
   <properties/>
-  <testcase name="testAppDraw()" classname="gremlins.TestApp" time="0.016">
+  <testcase name="testAppDraw()" classname="gremlins.TestApp" time="0.013">
     <failure message="java.lang.AssertionError" type="java.lang.AssertionError">java.lang.AssertionError
 	at gremlins.TestApp.testAppDraw(TestApp.java:73)
 	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
@@ -91,7 +91,7 @@
 	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
 </failure>
   </testcase>
-  <testcase name="testAppBuilds()" classname="gremlins.TestApp" time="0.0"/>
+  <testcase name="testAppBuilds()" classname="gremlins.TestApp" time="0.001"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>
